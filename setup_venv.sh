@@ -16,6 +16,7 @@ setup ()
 {
   if [[ $CONDA_PREFIX ]]; then
     echo "creating venv via conda"
+    eval "$(conda shell.bash hook)"
     conda create --prefix=$ENV_NAME python=$PYTHON_VERSION
     conda activate ./$ENV_NAME
     install_pkg
