@@ -3,12 +3,23 @@
 ENV_NAME="venv"
 PYTHON_VERSION="3.9.7"
 
+install_pkg()
+{
+  echo "install jupyter lab..."
+  pip install wheel
+  pip install jupyterlab ipywidgets pandas
+  pip install --editable .
+}
+
 # set up virtual environment
 setup ()
 {
   if [[ $CONDA_PREFIX ]]; then
     echo "creating venv via conda"
     conda create --prefix=$ENV_NAME python=$PYTHON_VERSION
+    conda activate ./$ENV_NAME
+    install_pkg
+    conda deactivate
   elif [[ $PYENV_ROOT ]]; then
     echo "creating venv via pyenv"
     export PYENV_ROOT="$HOME/.pyenv"
@@ -21,13 +32,10 @@ setup ()
     pyenv shell $PYTHON_VERSION
     python -m venv $ENV_NAME
     pyenv shell --unset
+    source $ENV_NAME/bin/activate
+    install_pkg
+    deactivate
   fi
-  echo "install jupyter lab..."
-  source $ENV_NAME/bin/activate
-  pip install wheel
-  pip install jupyterlab ipywidgets
-  pip install --editable .
-  deactivate
 }
 
 if [[ -d "${ENV_NAME}" && ! -L "${ENV_NAME}" ]]; then
@@ -37,6 +45,4 @@ else
 fi
 
 # start jupyter lab
-source $ENV_NAME/bin/activate
-jupyter lab . --port=9999
-deactivate
+$ENV_NAME/bin/jupyter lab . --port=9999
