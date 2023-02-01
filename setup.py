@@ -7,7 +7,7 @@ cython_config = {
         'compiler_directives':{'language_level':'3'},
 }
 
-pkg = 'syncphenotyping'
+pkg = 'tphenotype'
 sources = [f'src/{pkg}/utils/lexsort.pyx']
 extension = Extension('lexsort', sources=sources, extra_compile_args=["-std=c++11"])
 

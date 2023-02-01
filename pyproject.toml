@@ -3,7 +3,7 @@ requires = ["setuptools>=43.0.0", "wheel", "Cython"]
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "tphenotyping"
+name = "tphenotype"
 description="T-Phenotype: Discovering Phenotypes of Predictive Temporal Patterns in Disease Progression"
 license = {text = "BSD 3-Clause License"}
 version = "0.0.0"
@@ -17,6 +17,7 @@ dependencies = [
     "cython",
     "torch",
     "pyclustering",
+    "networkx"
 ]
 
 [tool.setuptools]
