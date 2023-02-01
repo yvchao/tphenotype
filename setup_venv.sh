@@ -26,6 +26,8 @@ setup ()
   source $ENV_NAME/bin/activate
   pip install wheel
   pip install jupyterlab ipywidgets
+  pip install --editable .
+  deactivate
 }
 
 if [[ -d "${ENV_NAME}" && ! -L "${ENV_NAME}" ]]; then
@@ -37,3 +39,4 @@ fi
 # start jupyter lab
 source $ENV_NAME/bin/activate
 jupyter lab . --port=9999
+deactivate
