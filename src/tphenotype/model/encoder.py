@@ -183,7 +183,7 @@ class LaplaceEncoder(NNBaseModel):
 
     def _sort_poles(self, poles, coeffs):
         idx = np.apply_along_axis(lambda x: sort_complex(x, threshold=self.delta_pole), axis=-1, arr=poles.detach().cpu())
-        idx = torch.from_numpy(idx)
+        idx = torch.from_numpy(idx).to(self.device)
         poles = torch.take_along_dim(poles, idx, dim=-1)
         coeffs = torch.take_along_dim(coeffs, idx[..., np.newaxis], dim=-2)
         return poles, coeffs
