@@ -145,7 +145,7 @@ class Predictor(NNBaseModel):
             for i in range(len(self.time_series_dims)):
                 encoder = self.encoders[i]
                 embed_size = encoder.get_embed_size()
-                times = torch.linspace(0, 1, steps=2 * encoder.window_size)[np.newaxis, :]
+                times = torch.linspace(0, 1, steps=2 * encoder.window_size, device=self.device)[np.newaxis, :]
                 embed_i = x_rep[:, :, self.x_dim + i * embed_size:self.x_dim + (i + 1) * embed_size]
                 poles, coeffs = encoder._embed_split(embed_i)
                 curve_i = encoder._decode(poles, coeffs, times, windowed=False)

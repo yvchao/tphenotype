@@ -179,7 +179,7 @@ class LaplaceEncoder(NNBaseModel):
         # we use a lexical order to sort the poles (and coefficients) as the output
         if self.equivariant_embed:
             poles, coeffs = self._sort_poles(poles, coeffs)
-        return poles, coeffs
+        return poles.contiguous(), coeffs.contiguous()
 
     def _sort_poles(self, poles, coeffs):
         idx = np.apply_along_axis(lambda x: sort_complex(x, threshold=self.delta_pole), axis=-1, arr=poles.detach().cpu())
@@ -299,8 +299,8 @@ class LaplaceEncoder(NNBaseModel):
         # evaluate the imaginary part of ILT[F(s)] at larger scale
         batch_size, series_size, _ = poles.shape
         # randomly scale time steps
-        t_scale = torch.linspace(0, 1, steps= series_size) \
-                + 0.5 / series_size * torch.randn((batch_size, series_size))
+        t_scale = torch.linspace(0, 1, steps= series_size, device=self.device) \
+                + 0.5 / series_size * torch.randn((batch_size, series_size), device=self.device)
         t_scale = torch.clamp(t_scale, min=0, max=1)
         # f_rec: batch_size x series_size x series_size
         f_rec = self._decode(poles, coeffs, t_scale, windowed=False)
@@ -328,7 +328,7 @@ class LaplaceEncoder(NNBaseModel):
             length = self.window_size
         else:
             length = series_size
-        times = torch.linspace(0, 1, steps=length)[np.newaxis, :]
+        times = torch.linspace(0, 1, steps=length, device=self.device)[np.newaxis, :]
         poles = poles[mask == 1.0].reshape((-1, 1, self.num_poles))
         coeffs = coeffs[mask == 1.0].reshape((-1, 1, self.num_poles, self.max_degree))
         # batch_size x 1 x window_size

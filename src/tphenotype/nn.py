@@ -63,7 +63,7 @@ class GRU(torch.nn.Module):
 
     def forward(self, x):
         batch_size, _, _ = x.shape
-        h0 = self.h0.expand(self.num_layers, batch_size, self.hidden_size)
+        h0 = self.h0.expand(self.num_layers, batch_size, self.hidden_size).contiguous()
         # x is of the shape N x L x input_size
         out, _ = self.rnn(x, h0)
         return out
@@ -85,8 +85,8 @@ class LSTM(torch.nn.Module):
 
     def forward(self, x):
         batch_size, _, _ = x.shape
-        h0 = self.h0.expand(self.num_layers, batch_size, self.hidden_size)
-        c0 = self.c0.expand(self.num_layers, batch_size, self.hidden_size)
+        h0 = self.h0.expand(self.num_layers, batch_size, self.hidden_size).contiguous()
+        c0 = self.c0.expand(self.num_layers, batch_size, self.hidden_size).contiguous()
         # x is of the shape N x L x input_size
         out, _ = self.rnn(x, (h0, c0))
         return out
