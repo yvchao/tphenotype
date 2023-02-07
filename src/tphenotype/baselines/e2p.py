@@ -77,7 +77,7 @@ class E2P(NNBaseModel):
     def _calculate_valid_losses(self, batch):
         # t = valid_set['t']
         # x = valid_set['x']
-        mask = batch['mask']
+        mask = batch['mask'].cpu()
         y = batch['y'].cpu()
         out = self.forward(batch)
         y_pred = out['prob'].detach().cpu()
