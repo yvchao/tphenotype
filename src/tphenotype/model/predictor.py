@@ -177,7 +177,8 @@ class Predictor(NNBaseModel):
 
     @numpy_io
     def predict_proba_g(self, x, t):
-        t = check_shape(t)
+        t = check_shape(t).to(self.device)
+        x = x.to(self.device)
         with torch.no_grad():
             x_rep = self._encode(x, t)
             out = self.forward({'x_rep': x_rep})
@@ -188,6 +189,7 @@ class Predictor(NNBaseModel):
     def predict_proba_from_x_rep(self, x_rep):
         # x_rep: batch_size x x_rep_size
         # x_rep = check_shape(x_rep)
+        x_rep = x_rep.to(self.device)
         with torch.no_grad():
             z = self.g(x_rep)
             prob = self._get_probs(z)
@@ -195,7 +197,8 @@ class Predictor(NNBaseModel):
 
     @numpy_io
     def embed(self, x, t):
-        t = check_shape(t)
+        t = check_shape(t).to(self.device)
+        x = x.to(self.device)
         with torch.no_grad():
             x_rep = self._encode(x, t)
             z = self.g(x_rep)
