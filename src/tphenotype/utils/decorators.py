@@ -40,7 +40,7 @@ def numpy_to_tensor(array):
 
 def tensor_to_numpy(tensor):
     if isinstance(tensor, torch.Tensor):
-        return tensor.numpy()
+        return tensor.detach().cpu().numpy()
     else:
         return tensor
 
