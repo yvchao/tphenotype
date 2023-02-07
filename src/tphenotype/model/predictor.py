@@ -127,7 +127,8 @@ class Predictor(NNBaseModel):
     @numpy_io
     @run_in_batch
     def encode(self, x, t):
-        t = check_shape(t)
+        t = check_shape(t).to(self.device)
+        x = x.to(self.device)
         with torch.no_grad():
             x_rep = self._encode(x, t)
         return x_rep
