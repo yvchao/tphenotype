@@ -78,9 +78,9 @@ class E2P(NNBaseModel):
         # t = valid_set['t']
         # x = valid_set['x']
         mask = batch['mask']
-        y = batch['y']
+        y = batch['y'].cpu()
         out = self.forward(batch)
-        y_pred = out['prob']
+        y_pred = out['prob'].detach().cpu()
 
         losses = {}
         losses['ce'] = cross_entropy(y_pred, y, mask=mask[:, :])
