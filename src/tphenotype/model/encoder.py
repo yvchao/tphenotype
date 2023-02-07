@@ -88,8 +88,8 @@ class LaplaceEncoder(NNBaseModel):
     @numpy_io
     def encode(self, f, t):
         # encode a time-series via poles and coefficients
-        f = check_shape(f)
-        t = check_shape(t)
+        f = check_shape(f).to(self.device)
+        t = check_shape(t).to(self.device)
 
         with torch.no_grad():
             poles, coeffs = self._encode(f, t)
@@ -100,7 +100,9 @@ class LaplaceEncoder(NNBaseModel):
     def decode(self, poles, coeffs, times):
         # reconstruct a time-series at given time points from poles and coefficients
 
-        times = check_shape(times)
+        poles = poles.to(self.device)
+        coeffs = coeffs.to(self.device)
+        times = check_shape(times).to(self.device)
 
         with torch.no_grad():
             fs = self._decode(poles, coeffs, times)
@@ -110,8 +112,8 @@ class LaplaceEncoder(NNBaseModel):
 
     @numpy_io
     def get_embed(self, f, t):
-        f = check_shape(f)
-        t = check_shape(t)
+        f = check_shape(f).to(self.device)
+        t = check_shape(t).to(self.device)
         with torch.no_grad():
             embed = self._get_embed(f, t)
         return embed
