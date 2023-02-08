@@ -100,6 +100,8 @@ class E2P(NNBaseModel):
 
     @numpy_io
     def encode(self, x, t):
+        x = x.to(self.device)
+        t = t.to(self.device)
         with torch.no_grad():
             z = self._encode(x, t)
             if self.latent_space == 'y':
@@ -115,6 +117,8 @@ class E2P(NNBaseModel):
 
     @numpy_io
     def predict_proba(self, x, t):
+        x = x.to(self.device)
+        t = t.to(self.device)
         with torch.no_grad():
             out = self.forward({'x': x, 't': t})
             # probs: batch_size x series_size x y_dim

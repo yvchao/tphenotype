@@ -142,6 +142,7 @@ class LaplaceEncoder(NNBaseModel):
 
     @numpy_io
     def embed_split(self, embed):
+        embed = embed.to(self.device)
         poles, coeffs = self._embed_split(embed)
         return poles, coeffs
 

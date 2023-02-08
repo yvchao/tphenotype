@@ -97,12 +97,16 @@ class S2S(NNBaseModel):
 
     @numpy_io
     def decode(self, z, t):
+        z = z.to(self.device)
+        t = t.to(self.device)
         with torch.no_grad():
             x_rec = self._decode(z, t)
         return x_rec
 
     @numpy_io
     def encode(self, x, t):
+        x = x.to(self.device)
+        t = t.to(self.device)
         with torch.no_grad():
             z = self._encode(x, t)
         return z
