@@ -102,9 +102,6 @@ def hyperparam_selection_encoder(dataname,seed=0, epochs = 50):
 
     scores = pd.DataFrame(columns=['mse_mean','mse_std', 'config'])
     for i,comb in enumerate(itertools.product(*search_space.values())):
-        if os.path.exists(result_file):
-            print(f'load existing result from {result_file}')
-            break
         test_config = encoder_config.copy()
         test_loss_weights = loss_weights.copy()
         msg = []
@@ -120,7 +117,7 @@ def hyperparam_selection_encoder(dataname,seed=0, epochs = 50):
         results, model = evaluate_encoder(Predictor,predictor_config,test_loss_weights,splits,seed=seed, epochs=epochs)
         scores.loc[i,'mse_mean'] = np.mean(results)
         scores.loc[i,'mse_std'] = np.std(results)
-        scores.loc[i,'config'] = json.dumps(loss_weights)
+        scores.loc[i,'config'] = msg
         scores.to_csv(result_file)
 
     scores = pd.read_csv(result_file, index_col=0)
