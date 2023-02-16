@@ -136,7 +136,7 @@ for dataname in ['Synth','ICU', 'ADNI']:
     
     config = read_config(scores.loc[best,'config'])
     
-    K = config['K']
+    K = int(config['K'])
     
     hyperparam_selection_predictor(dataname, search_space, K)
 
