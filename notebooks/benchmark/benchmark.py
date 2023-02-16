@@ -138,7 +138,7 @@ Encoder_config = {
     'hidden_size': 10,    # number of hidden units in neural networks
     'num_layers': 1,    # number of layers in MLP of the encoder (1 layer RNN + n layer MLP)
     'pole_separation': 1.0,    # minimum distance between distinct poles 
-    'freq_scaler': 30,    # scale up the imaginary part to help learning
+    'freq_scaler': 20,    # scale up the imaginary part to help learning
     'window_size': None,    # whether or not to include time delay terms
     'equivariant_embed': True,    # whether or not to sort the poles (useless during training)
     'device': 'cpu',
