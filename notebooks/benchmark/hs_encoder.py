@@ -22,6 +22,7 @@ def evaluate_encoder(method, config, loss_weights, splits,seed=0, epochs=50):
         train_set, valid_set, test_set = dataset
 
         torch.random.manual_seed(seed+i)
+        torch.use_deterministic_algorithms(True)
         model = method(**config)
         mse = model.evaluate_encoder_params(train_set, test_set, loss_weights, valid_set=valid_set, epochs=epochs, verbose=False)
         results.append(mse)
@@ -70,7 +71,7 @@ def load_data(dataname, verbose=False):
 # In[7]:
 
 
-def hyperparam_selection_encoder(dataname,seed=0, epochs = 50):
+def hyperparam_selection_encoder(dataname,search_space, seed=0, epochs = 50):
     splits, feat_list, temporal_dims = load_data(dataname, verbose=True)
     tr_set,va_set,te_set = splits[0]
     _, T, x_dim = tr_set['x'].shape
@@ -112,6 +113,10 @@ def hyperparam_selection_encoder(dataname,seed=0, epochs = 50):
                 test_loss_weights[k]=comb[j]
             msg.append(f'{k}:{comb[j]}')
         predictor_config['encoder_config'] = test_config
+        
+        if dataname != 'ICU' and test_config['max_degree']!=1:
+            # only conisder max_degree in [1,2] for ICU dataset
+            continue
         msg = ','.join(msg)
         print(f'test config {msg} ...')
         results, model = evaluate_encoder(Predictor,predictor_config,test_loss_weights,splits,seed=seed, epochs=epochs)
@@ -131,12 +136,7 @@ def hyperparam_selection_encoder(dataname,seed=0, epochs = 50):
 # In[4]:
 
 
-loss_weights = {
-    'rmse': 1.0,
-    'cont':0.01,
-    'pole': 1.0,
-    'real': 0.1
-}
+
 
 search_space = {
     'pole':[1.0,10.0],
@@ -148,7 +148,7 @@ search_space = {
 
 
 for dataname in ['Synth', 'ICU', 'ADNI']:
-    hyperparam_selection_encoder(dataname)
+    hyperparam_selection_encoder(dataname, search_space)
 
 
 # In[ ]:

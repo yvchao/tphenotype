@@ -129,6 +129,7 @@ KME2P_config = {
     'latent_size': 10,
     'hidden_size': 10,
     'num_layers': 2,
+    'device': 'cpu',
 }
 
 Encoder_config = {
@@ -140,6 +141,7 @@ Encoder_config = {
     'freq_scaler': 30,    # scale up the imaginary part to help learning
     'window_size': None,    # whether or not to include time delay terms
     'equivariant_embed': True,    # whether or not to sort the poles (useless during training)
+    'device': 'cpu',
 }
 
 Cls_config = {
@@ -159,6 +161,7 @@ Predictor_config = {
     'encoder_config': None,
     'cls_config': None,
     'categorical': True,
+    'device': 'cpu',
 }
 
 loss_weights = {
