@@ -164,3 +164,13 @@ class NNBaseModel(BaseModel, torch.nn.Module):
             return self, loss_history
         else:
             return self
+
+    def save(self, path='.', name=None):
+        state_dict = self.state_dict()
+        save_name = name if name is not None else f'{self.name}.pt'
+        torch.save(state_dict, f'{path}/{save_name}')
+    
+    def load(self, filename):
+        state_dict = torch.load(filename,map_location='cpu')
+        self.load_state_dict(state_dict)
+        return self.to(self.device)

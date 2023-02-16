@@ -439,6 +439,14 @@ class Predictor(NNBaseModel):
         loss = np.mean(AUROC)
         return loss 
     
+    def fit_clusters(self,train_set,verbose):
+        x = train_set['x']
+        t = train_set['t']
+        mask = train_set['mask']
+
+        self.cls.verbose = verbose
+        self.cls.fit(x, t, mask)
+        
 
     def fit(self,
             train_set,
@@ -482,12 +490,13 @@ class Predictor(NNBaseModel):
         # stage 3 - clustering based on similarity graph
         if verbose:
             print(f'stage 3 - clustering on similarity graph')
-        x = train_set['x']
-        t = train_set['t']
-        mask = train_set['mask']
+#         x = train_set['x']
+#         t = train_set['t']
+#         mask = train_set['mask']
 
-        self.cls.verbose = verbose
-        self.cls.fit(x, t, mask)
+#         self.cls.verbose = verbose
+#         self.cls.fit(x, t, mask)
+        self.fit_clusters(train_set,verbose)
         if verbose:
             print(f'done')
 
