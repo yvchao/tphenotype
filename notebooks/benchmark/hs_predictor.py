@@ -98,6 +98,9 @@ def hyperparam_selection_predictor(dataname,search_space,encoder_config, loss_we
 
     scores = pd.DataFrame(columns=['roc_mean','roc_std', 'config'])
     for i,comb in enumerate(itertools.product(*search_space.values())):
+        if len(comb)==0:
+            continue
+            
         test_config = predictor_config.copy()
         test_loss_weights = loss_weights.copy()
         msg = []
