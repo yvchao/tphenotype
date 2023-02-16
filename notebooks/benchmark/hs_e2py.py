@@ -21,6 +21,7 @@ def evaluate_predictor(method, config, loss_weights, splits,seed=0, epochs=50, s
         train_set, valid_set, test_set = dataset
 
         torch.random.manual_seed(seed+i)
+        torch.use_deterministic_algorithms(True)
         model = method(**config)
         model = model.fit(train_set, loss_weights, valid_set=valid_set, epochs=epochs, verbose=False)
         scores = evaluate(model, test_set, steps)
@@ -143,7 +144,7 @@ for dataname in ['Synth','ICU', 'ADNI']:
     config = read_config(scores.loc[best,'config'])
     
     K = int(config['K'])
-    
+
     hyperparam_selection_predictor(dataname, search_space, K)
 
 
