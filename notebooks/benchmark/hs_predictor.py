@@ -90,11 +90,11 @@ def hyperparam_selection_predictor(dataname,search_space,encoder_config, loss_we
     predictor_config['cls_config'] = cls_config
     predictor_config['encoder_config'] = encoder_config
 
-    
-
     print('T_phenotype config:')
     print(predictor_config)
     result_file = f'hyperparam_selection/{dataname}_predictor.csv'
+    if os.path.exists(result_file):
+        search_space = {}
 
     scores = pd.DataFrame(columns=['roc_mean','roc_std', 'config'])
     for i,comb in enumerate(itertools.product(*search_space.values())):
@@ -120,7 +120,7 @@ def hyperparam_selection_predictor(dataname,search_space,encoder_config, loss_we
 
     scores = pd.read_csv(result_file, index_col=0)
     scores = scores.astype({'roc_mean':'float'})
-    best = scores['mse_mean'].idxmax()
+    best = scores['roc_mean'].idxmax()
     print('Optimal hyperparameters:')
     print(scores.loc[best,'config'])
 
@@ -139,8 +139,6 @@ search_space = {
     'hidden_size':[5,10,20],
     'num_layer':[2,3,4],
 }
-
-
 
 
 for dataname in ['Synth', 'ICU', 'ADNI']:
