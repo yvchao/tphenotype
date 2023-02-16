@@ -408,7 +408,37 @@ class Predictor(NNBaseModel):
             loss += np.mean(diff)
         loss /= len(self.time_series_dims)
         return loss 
-            
+    
+    
+    def _fit_predictor(self, train_set, loss_weights, valid_set, args, learning_rate, verbose):
+        predictor_args = args.copy()
+        predictor_args['train_set'] = self._encode_dataset(train_set)
+        if valid_set is not None:
+            predictor_args['valid_set'] = self._encode_dataset(valid_set)
+        else:
+            predictor_args['valid_set'] = None
+        predictor_args['parameters'] = [{'params': self.g.parameters(), 'lr': learning_rate}]
+        if verbose:
+            print(f'stage 2 - fit the predictor')
+        super().fit(**predictor_args)
+        
+        
+    def evaluate_predictor_params(self, train_set, test_set, loss_weights, valid_set=None, learning_rate=0.1, batch_size=50, epochs=100, max_grad_norm=1,tolerance=None, device=None, verbose=True, **kwargs):
+        args = locals().copy()    # shallow copy
+        # remove the self variable
+        args.pop('self')
+        self._fit_encoders(train_set, loss_weights, valid_set, args, learning_rate, verbose)
+        self._fit_predictor(train_set, loss_weights, valid_set, args, learning_rate, verbose)
+
+        x = test_set['x']
+        t = test_set['t']
+        y = test_set['y']
+        mask = test_set['mask']
+        y_pred = self.predict_proba_g(x,t)
+        AUROC, AUPRC = get_auc_scores(y, y_pred, mask=mask)
+        loss = np.mean(AUROC)
+        return loss 
+    
 
     def fit(self,
             train_set,
@@ -436,16 +466,18 @@ class Predictor(NNBaseModel):
 
         # stage 2 - train the predictor
         # no gradient for the encoder
-        predictor_args = args.copy()
-        predictor_args['train_set'] = self._encode_dataset(train_set)
-        if valid_set is not None:
-            predictor_args['valid_set'] = self._encode_dataset(valid_set)
-        else:
-            predictor_args['valid_set'] = None
-        predictor_args['parameters'] = [{'params': self.g.parameters(), 'lr': learning_rate}]
-        if verbose:
-            print(f'stage 2 - fit the predictor')
-        super().fit(**predictor_args)
+        # predictor_args = args.copy()
+        # predictor_args['train_set'] = self._encode_dataset(train_set)
+        # if valid_set is not None:
+        #     predictor_args['valid_set'] = self._encode_dataset(valid_set)
+        # else:
+        #     predictor_args['valid_set'] = None
+        # predictor_args['parameters'] = [{'params': self.g.parameters(), 'lr': learning_rate}]
+        # if verbose:
+        #     print(f'stage 2 - fit the predictor')
+        # super().fit(**predictor_args)
+        
+        self._fit_predictor(train_set, loss_weights, valid_set, args, learning_rate, verbose)
 
         # stage 3 - clustering based on similarity graph
         if verbose:
