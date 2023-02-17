@@ -11,12 +11,15 @@ from ..utils.decorators import numpy_io
 class KME2P(E2P):
 
     def __init__(self, K: int, **kwargs):
-        super().__init__(**kwargs)
+        
+        if kwargs.get('latent_space','z')!='z':
+            kwargs['latent_size'] = kwargs['hidden_size']
+            
+        super(KME2P, self).__init__(**kwargs)
 
         self.K = K
         self.name = f'KM-E2P({self.latent_space})'
-        if self.latent_space!='z':
-            self.latent_size = self.hidden_size
+        
 
     def fit(self, train_set, loss_weights, **kwargs):
         # train the neural network first
