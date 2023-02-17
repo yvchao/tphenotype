@@ -58,7 +58,7 @@ def evaluation(preds, data, steps=[-1]):
 
 def update_results(results, preds, data):
     result = evaluation(preds, data)
-    result['n']=4
+    result['n']=5
     result['epochs']=200
     idx = results.index[results['method']==result['method']]
     if len(idx)==0:
@@ -73,7 +73,7 @@ def update_results(results, preds, data):
 outdir = 'benchmark_results'
 
 for dataname in ['Synth','ICU', 'ADNI']:
-    data = 'data/ADNI_data.pkl'
+    data = f'data/{dataname}_data.pkl'
     benchmark = f'{outdir}/{dataname}_benchmark.csv'
     results = pd.read_csv(benchmark,index_col=0)
     
