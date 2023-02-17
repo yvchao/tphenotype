@@ -65,8 +65,8 @@ class JointPredictor(Predictor):
         return losses
 
     def _calculate_valid_losses(self, batch):
-        t = batch['t'].cpu()
-        x = batch['x'].cpu()
+        t = batch['t']
+        x = batch['x']
         mask = batch['mask'].cpu()
         y = batch['y'].cpu()
 
