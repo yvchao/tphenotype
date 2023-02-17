@@ -8,7 +8,7 @@ install_pkg()
   echo "install dependencies..."
   pip install wheel
   #pip install jupyterlab ipywidgets pandas
-  pip install -r requirement.txt
+  pip install -r requirements.txt
   pip install --editable .
 }
 
