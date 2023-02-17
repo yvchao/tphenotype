@@ -121,6 +121,11 @@ def purity_score(y_true, y_pred):
     # return purity
     return np.sum(np.amax(c_matrix, axis=0)) / np.sum(c_matrix)
 
+def set_random_seed(seed):
+    os.environ['PYTHONHASHSEED']=str(seed)
+    random.seed(seed)
+    np.random.seed(seed)
+    tf.set_random_seed(seed)
 
 
 if __name__ == '__main__':
@@ -147,10 +152,7 @@ if __name__ == '__main__':
     RESULT_PURITY = np.zeros([OUT_ITERATION, 1])
 
     seed = args.seed
-    os.environ['PYTHONHASHSEED']=str(0)
-    tf.set_random_seed(0)
-    random.seed(0)
-    np.random.seed(0)
+    set_random_seed(seed)
 
     # Initialization
     print('Initialize models')
@@ -208,21 +210,21 @@ if __name__ == '__main__':
 
     # In[12]:
     tf.reset_default_graph()
-
+    
     # Turn on xla optimization
     config = tf.ConfigProto()
     config.gpu_options.allow_growth = True
+    seed = args.seed
+    set_random_seed(seed)
     sess = tf.Session(config=config)
 
+    
     model = DeepTPC_ICLR(sess, "Deep_TPC", input_dims, network_settings)
-    seed = args.seed
 
-    tf.set_random_seed(0)
-    random.seed(0)
-    np.random.seed(0)
+
 
     lr_rate1   = 0.001
-    keep_prob  = 0.7
+    keep_prob  = 1.0
     mb_size    = 128
 
     ITERATION  = epochs
@@ -305,9 +307,7 @@ if __name__ == '__main__':
 
     print('Start trainig AC-TPC')
 
-    tf.set_random_seed(0)
-    random.seed(0)
-    np.random.seed(0)
+
 
     for out_itr in range(OUT_ITERATION):
         print("======= K: {}   OUT_ITERATION: {} ======".format(K, out_itr))
@@ -347,6 +347,7 @@ if __name__ == '__main__':
         # Turn on xla optimization
         config = tf.ConfigProto()
         config.gpu_options.allow_growth = True
+        set_random_seed(seed)
         sess = tf.Session(config=config)
 
         network_settings = load_logging(load_path + 'models/network_settings_v7_K{}.txt'.format(K))
@@ -408,7 +409,7 @@ if __name__ == '__main__':
 
         mb_size    = 128
         M          = int(tr_data_x.shape[0]/mb_size) #for main algorithm
-        keep_prob  = 0.7
+        keep_prob  = 1.0
         lr_rate1   = 1e-3
         lr_rate2   = 1e-3
 

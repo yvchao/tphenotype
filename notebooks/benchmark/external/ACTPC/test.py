@@ -129,6 +129,14 @@ def data_to_stats(x):
         return f'{np.mean(x):.2f}±{np.std(x):.2f}'
     else:
         return x[0]
+    
+
+def set_random_seed(seed):
+    os.environ['PYTHONHASHSEED']=str(seed)
+    random.seed(seed)
+    np.random.seed(seed)
+    tf.set_random_seed(seed)
+
 
 
 if __name__ == '__main__':
@@ -162,11 +170,8 @@ if __name__ == '__main__':
     RESULT_AUPRC     = np.zeros([OUT_ITERATION, y_dim])
 
     seed = args.seed
-    os.environ['PYTHONHASHSEED']=str(0)
-    tf.set_random_seed(0)
-    random.seed(0)
-    np.random.seed(0)
-
+    set_random_seed(seed)
+    
     dfs=[]
     
     model_preds = []
@@ -210,7 +215,9 @@ if __name__ == '__main__':
         # Turn on xla optimization
         config = tf.ConfigProto()
         config.gpu_options.allow_growth = True
+        set_random_seed(seed)
         sess = tf.Session(config=config)
+        
 
         network_settings = load_logging(load_path + 'models/network_settings_v7_K{}.txt'.format(K))
         z_dim = network_settings['num_layers_encoder'] * network_settings['h_dim_encoder']

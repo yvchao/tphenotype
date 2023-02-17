@@ -140,6 +140,11 @@ def purity_score(y_true, y_pred):
     return np.sum(np.amax(c_matrix, axis=0)) / np.sum(c_matrix)
 
 
+def set_random_seed(seed):
+    os.environ['PYTHONHASHSEED']=str(seed)
+    random.seed(seed)
+    np.random.seed(seed)
+    tf.set_random_seed(seed)
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
@@ -165,10 +170,7 @@ if __name__ == '__main__':
     RESULT_PURITY = np.zeros([OUT_ITERATION, 1])
 
     seed = args.seed
-    os.environ['PYTHONHASHSEED']=str(0)
-    tf.set_random_seed(0)
-    random.seed(0)
-    np.random.seed(0)
+    set_random_seed(seed)
 
     # Initialization
     print('Initialize auto-encoder')
@@ -242,6 +244,7 @@ if __name__ == '__main__':
         # Turn on xla optimization
         config = tf.ConfigProto()
         config.gpu_options.allow_growth = True
+        set_random_seed(seed)
         sess = tf.Session(config=config)
 
         model = DCN_Seq2Seq(sess, "dcn_S2S", input_dims, network_settings)
@@ -258,7 +261,7 @@ if __name__ == '__main__':
         sess.run(tf.global_variables_initializer())
 
         lr_rate    = 1e-3
-        keep_prob  = 0.7
+        keep_prob  = 1.0
         mb_size    = 128
 
         avg_loss_ae  = 0
@@ -307,12 +310,12 @@ if __name__ == '__main__':
 
     print('Start KMenas on embedding')
 
-    tf.set_random_seed(0)
-    random.seed(0)
-    np.random.seed(0)
+    # tf.set_random_seed(0)
+    # random.seed(0)
+    # np.random.seed(0)
     
     lr_rate    = 1e-4
-    keep_prob  = 0.7
+    keep_prob  = 1.0
     mb_size    = 128
 
     alpha      = 0.1  #L_CLUSTER
@@ -360,6 +363,7 @@ if __name__ == '__main__':
         # Turn on xla optimization
         config = tf.ConfigProto()
         config.gpu_options.allow_growth = True
+        set_random_seed(seed)
         sess = tf.Session(config=config)
 
         network_settings = load_logging(load_path + 'models/network_settings_v3.txt')
