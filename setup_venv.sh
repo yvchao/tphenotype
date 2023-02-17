@@ -30,6 +30,7 @@ setup ()
 
     if [[ -z $(pyenv versions | grep -i $PYTHON_VERSION) ]]; then
       echo "installing python $PYTHON_VERSION..."
+      pyenv install $PYTHON_VERSION
     fi
     pyenv shell $PYTHON_VERSION
     python -m venv $ENV_NAME
