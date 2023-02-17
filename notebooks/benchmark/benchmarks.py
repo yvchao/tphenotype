@@ -204,7 +204,7 @@ def prepare_benchmark(dataname):
     
     KMLaplace_config = predictor_config.copy()
     KMLaplace_config['K']=K
-    setup_list.append((KMLaplace, predictor_config, predictor_loss_weights))
+    setup_list.append((KMLaplace, KMLaplace_config, predictor_loss_weights))
     setup_list.append((JointPredictor, predictor_config, predictor_loss_weights))
     
     return splits, setup_list
