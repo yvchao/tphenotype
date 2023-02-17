@@ -143,17 +143,18 @@ def prepare_benchmark(dataname):
     
     result_file = f'hyperparam_selection/{dataname}_E2Py.csv'
     scores = pd.read_csv(result_file, index_col=0)
-    scores = scores.astype({'mse_mean':'float'})
-    best = scores['mse_mean'].idxmin()
+    scores = scores.astype({'H_mean':'float'})
+    best = scores['H_mean'].idxmax()
     config_e2py = read_config(scores.loc[best,'config'])
     
     result_file = f'hyperparam_selection/{dataname}_E2Pz.csv'
     scores = pd.read_csv(result_file, index_col=0)
-    scores = scores.astype({'mse_mean':'float'})
-    best = scores['mse_mean'].idxmin()
+    scores = scores.astype({'H_mean':'float'})
+    best = scores['H_mean'].idxmax()
     config_e2pz = read_config(scores.loc[best,'config'])
     
     K = int(config_K['K'])
+    print(dataname, K)
     
     setup_list = []
 
