@@ -15,6 +15,8 @@ class KME2P(E2P):
 
         self.K = K
         self.name = f'KM-E2P({self.latent_space})'
+        if self.latent_space!='z':
+            self.latent_size = self.hidden_size
 
     def fit(self, train_set, loss_weights, **kwargs):
         # train the neural network first
