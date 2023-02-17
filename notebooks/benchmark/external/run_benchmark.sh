@@ -1,7 +1,7 @@
 #!/bin/bash 
 
 ENV_NAME="venv"
-PYTHON_VERSION="3.7.12"
+PYTHON_VERSION="3.7.13"
 EPOCHS=200
 
 install_pkg()
