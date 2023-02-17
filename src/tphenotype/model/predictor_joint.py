@@ -82,7 +82,7 @@ class JointPredictor(Predictor):
             losses['rmse'] = losses.get('rmse',0.0) + encoder_losses['rmse'].detach().cpu() / len(self.time_series_dims)
         #
 
-        AUROC, AUPRC = get_auc_scores(y, y_pred, mask=mask)
+        AUROC, AUPRC = get_auc_scores(y, y_pred, mask=mask.cpu())
         losses['AUROC'] = torch.tensor(np.mean(AUROC))
         losses['AUPRC'] = torch.tensor(np.mean(AUPRC))
 
