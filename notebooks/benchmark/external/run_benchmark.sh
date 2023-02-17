@@ -1,18 +1,35 @@
 #!/bin/bash 
 
 ENV_NAME="venv"
-PYTHON_VERSION="3.9.7"
+PYTHON_VERSION="3.7.12"
+EPOCHS=200
 
 install_pkg()
 {
-  echo "install dependencies..."
-  pip install wheel
-  pip install -r requirement.txt
-  pip install --editable .
+  pip install -r requirements.txt
+}
+
+run_exp()
+{
+  cd ACTPC
+  python train.py -k 3 -d 'Synth' --epochs=$EPOCHS
+  python test.py -k 3 -d 'Synth'
+  python train.py -k 2 -d 'ICU' --epochs=$EPOCHS
+  python test.py -k 2 -d 'ICU'
+  python train.py -k 4 -d 'ADNI' --epochs=$EPOCHS
+  python test.py -k 4 -d 'ADNI'
+  cd ../dcn_Seq2Seq
+  python train.py -k 3 -d 'Synth' --epochs=$EPOCHS
+  python test.py -k 3 -d 'Synth'
+  python train.py -k 2 -d 'ICU' --epochs=$EPOCHS
+  python test.py -k 2 -d 'ICU'
+  python train.py -k 4 -d 'ADNI' --epochs=$EPOCHS
+  python test.py -k 4 -d 'ADNI'
+  cd ..
 }
 
 # set up virtual environment
-setup ()
+setup()
 {
   if [[ $CONDA_PREFIX ]]; then
     echo "creating venv via conda"
@@ -45,5 +62,12 @@ else
   setup
 fi
 
-# start jupyter lab
-$ENV_NAME/bin/jupyter lab . --port=9999
+if [[ $CONDA_PREFIX ]]; then
+  conda activate ./$ENV_NAME
+  run_exp
+  conda deactivate
+elif [[ $PYENV_ROOT ]]; then
+  source $ENV_NAME/bin/activate
+  run_exp
+  deactivate
+fi
