@@ -47,4 +47,4 @@ else
 fi
 
 # start jupyter lab
-$ENV_NAME/bin/jupyter lab . --port=9999
+$ENV_NAME/bin/jupyter lab ./notebooks --port=9999
