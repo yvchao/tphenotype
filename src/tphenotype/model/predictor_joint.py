@@ -65,13 +65,13 @@ class JointPredictor(Predictor):
         return losses
 
     def _calculate_valid_losses(self, batch):
-        t = batch['t']
-        x = batch['x']
-        mask = batch['mask']
-        y = batch['y']
+        t = batch['t'].cpu()
+        x = batch['x'].cpu()
+        mask = batch['mask'].cpu()
+        y = batch['y'].cpu()
 
         out = self.forward(batch)
-        y_pred = out['prob']
+        y_pred = out['prob'].detach().cpu()
 
         losses = {}
         losses['ce'] = cross_entropy(y_pred, y, mask=mask[:, :])
@@ -79,7 +79,7 @@ class JointPredictor(Predictor):
         for i,d in enumerate(self.time_series_dims):
             x_d = x[:,:,d]
             encoder_losses = self.encoders[i].expose_loss(x_d,t,mask)
-            losses['rmse'] = losses.get('rmse',0.0) + encoder_losses['rmse'] / len(self.time_series_dims)
+            losses['rmse'] = losses.get('rmse',0.0) + encoder_losses['rmse'].detach().cpu() / len(self.time_series_dims)
         #
 
         AUROC, AUPRC = get_auc_scores(y, y_pred, mask=mask)
