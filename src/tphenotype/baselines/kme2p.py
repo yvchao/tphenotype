@@ -5,6 +5,7 @@ from pyclustering.cluster.center_initializer import kmeans_plusplus_initializer
 import numpy as np
 
 from .e2p import E2P
+from ..utils.decorators import numpy_io
 
 
 class KME2P(E2P):
@@ -52,14 +53,14 @@ class KME2P(E2P):
         elif self.latent_space == 'z':
             z = self.centers[cluster_idx.reshape((-1,))]
             with torch.no_grad():
-                z = torch.from_numpy(z)
+                z = torch.from_numpy(z).to(self.device)
                 logits = self.predictor(z)
-                probs = torch.softmax(logits,dim=-1).numpy()
+                probs = torch.softmax(logits,dim=-1).cpu().numpy()
         elif self.latent_space == 'y-1':
             z = self.centers[cluster_idx.reshape((-1,))]
             with torch.no_grad():
-                z = torch.from_numpy(z)
-                probs = torch.softmax(z,dim=-1).numpy()
+                z = torch.from_numpy(z).to(self.device)
+                probs = torch.softmax(z,dim=-1).cpu().numpy()
         else:
             raise NotImplementedError()
 
