@@ -67,7 +67,11 @@ class KMDTW(BaseModel):
     def save(self, path='.', name=None):
         save_name = name if name is not None else f'{self.name}.pkl'
         with open(f'{path}/{save_name}', 'wb') as out:
-            pickle.dump(self.__dict__, out, pickle.HIGHEST_PROTOCOL)
+            state_dict = {}
+            state_dict['cls'] = self.cls
+            state_dict['cluster_y'] = self.cluster_y
+            state_dict['centers'] = self.centers
+            pickle.dump(state_dict, out, pickle.HIGHEST_PROTOCOL)
     
     def load(self, filename):
         with open(f'{path}/{save_name}', 'rb') as file:
