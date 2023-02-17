@@ -162,6 +162,7 @@ if __name__ == '__main__':
     RESULT_AUPRC     = np.zeros([OUT_ITERATION, y_dim])
 
     seed = args.seed
+    os.environ['PYTHONHASHSEED']=str(0)
     tf.set_random_seed(0)
     random.seed(0)
     np.random.seed(0)
