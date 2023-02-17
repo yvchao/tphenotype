@@ -92,7 +92,7 @@ def load_data(dataname, verbose=False):
 # In[7]:
 
 
-def run_benchmark(dataname, splits, setup_list, seed=0, epochs=50)
+def run_benchmark(dataname, splits, setup_list, seed=0, epochs=50):
     result_file = f'{output_dir}/{dataname}_benchmark.csv'
     results = []
     epochs=50
