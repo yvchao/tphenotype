@@ -18,10 +18,12 @@ class JointPredictor(Predictor):
 
     @numpy_io
     def predict_proba_g(self, x, t):
-        t = check_shape(t)
+        t = check_shape(t).to(self.device)
+        x = x.to(self.device)
         with torch.no_grad():
             out = self.forward({'x': x,'t':t})
         return out["prob"]
+    
 
     def forward(self, input):
         # t: batch_size x series_size
