@@ -265,7 +265,7 @@ class DeepTPC_ICLR:
             self.LOSS_Ey = 0
             for i in range(self.K):
                 for j in range(i+1, self.K):
-                    self.LOSS_Ey += - loss_1(Ey[i, :], Ey[j, :], y_type_ = self.y_type) / ((self.K-1)*(self.K-2)) # negative because we want to increase this;
+                    self.LOSS_Ey += - loss_1(Ey[i, :], Ey[j, :], y_type_ = self.y_type) / ((self.K)*(self.K-1)) # negative because we want to increase this;
                     
             
             ### DEFINE OPTIMIZATION SOLVERS
