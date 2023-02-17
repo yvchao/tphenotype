@@ -30,7 +30,7 @@ class KME2P(E2P):
         metric = distance_metric(type_metric.EUCLIDEAN_SQUARE)
 
         # create K-Means algorithm with specific distance metric
-        self.kmeans_instance = kmeans(embeds, initial_centers, metric=metric, ccore=True)
+        self.kmeans_instance = kmeans(embeds, initial_centers, metric=metric, ccore=False)
 
         # run cluster analysis and obtain results
         self.kmeans_instance.process()

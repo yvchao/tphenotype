@@ -50,7 +50,7 @@ class KMDTW(BaseModel):
         metric = distance_metric(type_metric.USER_DEFINED, func=distance_func)
 
         # create K-Means algorithm with specific distance metric
-        self.cls = kmeans(x, initial_centers, metric=metric, ccore=True)
+        self.cls = kmeans(x, initial_centers, metric=metric, ccore=False)
 
         # run cluster analysis and obtain results
         self.cls.process()

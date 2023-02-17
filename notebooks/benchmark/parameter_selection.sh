@@ -1,5 +1,6 @@
 #!/usr/bin/bash
 
+# use deterministic algorithms
 export CUBLAS_WORKSPACE_CONFIG=:4096:8
 
 echo "hparams selection for TPhenotype"
