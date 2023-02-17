@@ -10,6 +10,7 @@ from .predictor import Predictor
 
 class JointPredictor(Predictor):
 
+    @device_init
     def __init__(self,**kwargs):
 
         super().__init__(**kwargs)
