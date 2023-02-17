@@ -1,4 +1,6 @@
 #!/bin/bash 
+ENV_NAME=venv
+
 echo run hyperparameter selection
 
 if [[ $CONDA_PREFIX ]]; then
