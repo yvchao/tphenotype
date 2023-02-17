@@ -67,14 +67,14 @@ class JointPredictor(Predictor):
     def _calculate_valid_losses(self, batch):
         t = batch['t']
         x = batch['x']
-        mask = batch['mask'].cpu()
+        mask = batch['mask']
         y = batch['y'].cpu()
 
         out = self.forward(batch)
         y_pred = out['prob'].detach().cpu()
 
         losses = {}
-        losses['ce'] = cross_entropy(y_pred, y, mask=mask[:, :])
+        losses['ce'] = cross_entropy(y_pred, y, mask=mask.cpu())
 
         for i,d in enumerate(self.time_series_dims):
             x_d = x[:,:,d]
