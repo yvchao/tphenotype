@@ -63,6 +63,7 @@ else
 fi
 
 if [[ $CONDA_PREFIX ]]; then
+  eval "$(conda shell.bash hook)"
   conda activate ./$ENV_NAME
   run_exp
   conda deactivate
