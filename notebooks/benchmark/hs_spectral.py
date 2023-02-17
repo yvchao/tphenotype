@@ -129,8 +129,9 @@ search_space = {
 }
 
 
-for dataname in ['Synth','ICU', 'ADNI']:
-    result_file = f'hyperparam_selection/{dataname}_K.csv'
+for dataname in ['Synth']:
+    # calculation is only feasible on synthetic data
+    result_file = f'hyperparam_selection/{dataname1}_K.csv'
     scores = pd.read_csv(result_file, index_col=0)
     scores = scores.astype({'H_mean':'float'})
     best = scores['H_mean'].idxmax()
