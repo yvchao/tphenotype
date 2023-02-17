@@ -209,8 +209,8 @@ def prepare_benchmark(dataname):
     
     return splits, setup_list
     
+if __name__ == "__main__":
+    for dataname in ['Synth','ICU', 'ADNI']:
+        splits, setup_list = prepare_benchmark(dataname)
+        run_benchmark(dataname, splits, setup_list)
 
-for dataname in ['Synth','ICU', 'ADNI']:
-    splits, setup_list = prepare_benchmark(dataname)
-    run_benchmark(dataname, splits, setup_list)
-    
