@@ -75,7 +75,7 @@ class KMDTW(BaseModel):
             pickle.dump(state_dict, out, pickle.HIGHEST_PROTOCOL)
     
     def load(self, filename):
-        with open(f'{path}/{save_name}', 'rb') as file:
+        with open(filename, 'rb') as file:
             tmp_dict = pickle.load(file)
         self.__dict__.update(tmp_dict) 
         
