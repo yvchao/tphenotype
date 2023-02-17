@@ -202,7 +202,8 @@ def prepare_benchmark(dataname):
     predictor_config['num_layer'] = int(config_predictor['num_layer'])
     setup_list.append((Predictor, predictor_config, predictor_loss_weights))
     
-    
+    KMLaplace_config = predictor_config.copy()
+    KMLaplace_config['K']=K
     setup_list.append((KMLaplace, predictor_config, predictor_loss_weights))
     setup_list.append((JointPredictor, predictor_config, predictor_loss_weights))
     
