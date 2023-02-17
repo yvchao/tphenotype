@@ -1,4 +1,5 @@
 import numpy as np
+import pickle
 from dtaidistance.dtw import dtw_cc
 from pyclustering.cluster.kmeans import kmeans
 from pyclustering.utils.metric import type_metric, distance_metric
@@ -61,6 +62,18 @@ class KMDTW(BaseModel):
         self.cluster_y = np.zeros((len(clusters), y_dim))
         for i, c in enumerate(clusters):
             self.cluster_y[i] = np.mean(y[c], axis=0)
+        return self
+    
+    def save(self, path='.', name=None):
+        save_name = name if name is not None else f'{self.name}.pkl'
+        with open(f'{path}/{save_name}', 'wb') as out:
+            pickle.dump(self.__dict__, out, pickle.HIGHEST_PROTOCOL)
+    
+    def load(self, filename):
+        with open(f'{path}/{save_name}', 'rb') as file:
+            tmp_dict = pickle.load(file)
+        self.__dict__.update(tmp_dict) 
+        
         return self
 
     def predict_cluster(self, x, t):

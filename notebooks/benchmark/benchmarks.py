@@ -97,7 +97,7 @@ def run_benchmark(dataname, splits, setup_list, seed=0, epochs=50):
     results = []
     epochs=50
     for model, config, loss_weights in auto.tqdm(setup_list, desc='setups'):
-        result = benchmark(model, config, splits, loss_weights, seed=seed, epochs=epochs)
+        result = benchmark(model, config, splits, loss_weights, seed=seed, epochs=epochs, dataname=dataname)
         results.append(result)
     results = pd.DataFrame(results)
     results['n']=len(splits)
