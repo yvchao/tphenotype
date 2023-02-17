@@ -182,12 +182,12 @@ def prepare_benchmark(dataname):
     setup_list.append((KMDTW, kmdtw_config, kmdtw_loss_weights))
 
     encoder_config = Encoder_config.copy()
-    encoder_config['pole_separation'] = int(config_encoders['pole_separation'])
+    encoder_config['pole_separation'] = float(config_encoders['pole_separation'])
     encoder_config['max_degree'] = int(config_encoders['max_degree'])
     
     predictor_loss_weights = loss_weights.copy()
-    predictor_loss_weights['pole'] = int(config_encoders['pole'])
-    predictor_loss_weights['real'] = int(config_encoders['real'])
+    predictor_loss_weights['pole'] = float(config_encoders['pole'])
+    predictor_loss_weights['real'] = float(config_encoders['real'])
     
     cls_config = Cls_config.copy()
     cls_config['K'] = K
