@@ -7,7 +7,7 @@ install_pkg()
 {
   echo "install dependencies..."
   pip install wheel
-  pip install -r requirement.txt
+  pip install -r requirements.txt
   pip install --editable .
 }
 
