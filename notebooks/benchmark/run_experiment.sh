@@ -1,4 +1,8 @@
 #!/bin/bash 
+
+# use deterministic algorithms
+export CUBLAS_WORKSPACE_CONFIG=:4096:8
+
 ENV_NAME=venv
 
 run_in_venv()
