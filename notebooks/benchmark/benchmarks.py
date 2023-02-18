@@ -30,13 +30,15 @@ def benchmark(method, config, splits, loss_weights, steps=[-1], epochs=50, seed=
         torch.use_deterministic_algorithms(True)
         
         model = method(**config)
-        model_name = f'{dataname}-{model.name}-{i}.pt'
-        model_path = f'{output_dir}/{model_name}'
+        save_dir = 'model_cache'
+        model_name = f'bm-{dataname}-{model.name}-{i}.pt'
+        model_path = f'{save_dir}/{model_name}'
         if dataname is not None and os.path.exists(model_path):
             model = model.load(model_path)
         else:
+            os.makedirs(save_dir, exist_ok=True)
             model = model.fit(train_set, loss_weights, valid_set=valid_set, epochs=epochs, verbose=False)
-            model.save(output_dir, model_name)
+            model.save(save_dir, model_name)
             
         scores = evaluate(model, test_set, steps)
         results.append(scores)
