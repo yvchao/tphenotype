@@ -141,7 +141,7 @@ def hyperparam_selection_encoder(dataname,search_space, seed=0, epochs = 50):
 search_space = {
     'pole':[1.0,10.0],
     'real':[0.1,1.0],
-    'pole_separation':[1.0, 2.0],
+    'pole_separation':[1.5, 2.0],
     'max_degree': [1,2],
 }
 
