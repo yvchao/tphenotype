@@ -61,21 +61,25 @@ def coeff_visualization(coeffs, degree=1, step=-1, ax=None):
     fig.tight_layout()
     return fig
 
-def fn_visualization(t, f, f_rec, mask, idx, ax=None):
+def fn_visualization(t, f,f_rec, mask, idx,window=None, ax=None):
     if ax is None:
-        fig, ax = plt.subplots(figsize=(8, 4))
+        fig, ax = plt.subplots(figsize=(6,4))
     else:
         fig = ax.get_figure()
-
+        
     f_rec_r, f_rec_i = f_rec
-
-    step = int(np.sum(mask[idx]) - 1)
-    ax.plot(t[idx, :step + 1], f[idx, :step + 1], label='f_obs', marker='o')
-    ax.plot(t[idx], f_rec_r[idx, step], label='Re(f_rec)', marker='x')
-    ax.plot(t[idx], f_rec_i[idx, step], label='Im(f_rec)', marker='x')
-    ymin, ymax = plt.ylim()
-    ax.vlines(t[idx, step], ymin, ymax, color='red', linestyles='dashed')
+        
+    step = int(np.sum(mask[idx])-1)
+    ax.plot(t[idx,:step+1],f[idx,:step+1],label='$x(\mathbf{t})$',marker='o')
+    if window is not None:
+        ax.plot(t[idx,step+1-window:step+1],f_rec_r[idx,step],label='$\mathrm{Re}(\hat{x}(\mathbf{t}))$',marker='x')
+        ax.plot(t[idx,step+1-window:step+1],f_rec_i[idx,step],label='$\mathrm{Im}(\hat{x}(\mathbf{t}))$',marker='x')
+    else:
+        ax.plot(t[idx],f_rec_r[idx,step],label='Re(f_rec)',marker='x')
+        ax.plot(t[idx],f_rec_i[idx,step],label='Im(f_rec)',marker='x')
+    ymin,ymax = plt.ylim()
+    #ax.vlines(t[idx,step],ymin,ymax,color='red', linestyles='dashed')
+    ax.set_xlabel('$t$')
     ax.legend()
-    ax.grid(True)
     fig.tight_layout()
     return fig
