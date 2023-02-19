@@ -84,7 +84,7 @@ class S2S(NNBaseModel):
 
         # batch_size x 1
         x_hat = self.predictor(z)[:, np.newaxis, :]
-        h_tau = self.h0_r.expand(self.num_layers, batch_size, self.latent_size)
+        h_tau = self.h0_r.expand(self.num_layers, batch_size, self.latent_size).contiguous()
         xs = [x_hat]
         for tau in range(1, series_size):
             xt = torch.cat([x_hat, dt[:, np.newaxis, [-tau]]], dim=-1)
