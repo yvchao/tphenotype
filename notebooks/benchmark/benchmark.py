@@ -129,7 +129,7 @@ KME2P_config = {
     'latent_size': 10,
     'hidden_size': 10,
     'num_layers': 2,
-    'device': 'cuda',
+    'device': 'cpu',
 }
 
 Encoder_config = {
@@ -141,7 +141,7 @@ Encoder_config = {
     'freq_scaler': 20,    # scale up the imaginary part to help learning
     'window_size': None,    # whether or not to include time delay terms
     'equivariant_embed': True,    # whether or not to sort the poles (useless during training)
-    'device': 'cuda',
+    'device': 'cpu',
 }
 
 Cls_config = {
@@ -161,7 +161,7 @@ Predictor_config = {
     'encoder_config': None,
     'cls_config': None,
     'categorical': True,
-    'device': 'cuda',
+    'device': 'cpu',
 }
 
 loss_weights = {'ce': 1.0, 'rmse': 1.0, 'cont': 0.01, 'pole': 1.0, 'real': 0.1}

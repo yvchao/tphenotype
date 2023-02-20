@@ -130,7 +130,7 @@ def read_config(config_str):
 search_space = {
     'hidden_size': [10, 20, 30],
     'latent_size': [5, 10, 20],
-    'num_layers': [2, 3, 4],
+    'num_layers': [2],
 }
 
 for dataname in ['Synth', 'ICU', 'ADNI']:
@@ -142,6 +142,8 @@ for dataname in ['Synth', 'ICU', 'ADNI']:
     config = read_config(scores.loc[best, 'config'])
 
     K = int(config['K'])
+    if dataname == 'Synth':
+        K=3
 
     hyperparam_selection_predictor(dataname, search_space, K)
 

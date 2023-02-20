@@ -140,7 +140,7 @@ def read_config(config_str):
 
 
 search_space = {
-    'hidden_size': [5, 10, 20],
+    'hidden_size': [5, 10],
     'num_layer': [2, 3, 4],
 }
 

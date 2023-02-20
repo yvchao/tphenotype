@@ -137,6 +137,7 @@ for dataname in ['Synth']:
     config = read_config(scores.loc[best, 'config'])
 
     K = int(config['K'])
+    K = 3
 
     hyperparam_selection_predictor(dataname, search_space, K)
 

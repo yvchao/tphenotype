@@ -154,6 +154,8 @@ def prepare_benchmark(dataname):
     config_e2pz = read_config(scores.loc[best, 'config'])
 
     K = int(config_K['K'])
+    if dataname == 'Synth':
+        K = 3
     print(f'dataset {dataname}, cluster num K= {K}')
 
     setup_list = []

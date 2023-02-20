@@ -1,4 +1,5 @@
 #!/bin/bash 
+export CUDA_VISIBLE_DEVICES=-1
 
 ENV_NAME="venv"
 PYTHON_VERSION="3.7.13"
