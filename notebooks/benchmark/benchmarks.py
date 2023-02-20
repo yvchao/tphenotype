@@ -95,12 +95,21 @@ def load_data(dataname, verbose=False):
 
 def run_benchmark(dataname, splits, setup_list, seed=0, epochs=50):
     result_file = f'{output_dir}/{dataname}_benchmark.csv'
+    if os.path.exists(result_file):
+        existing_df = pd.read_csv(result_file, index_col=0)
+    else:
+        existing_df = pd.DataFrame(columns=['method'])
     results = []
     epochs = 50
     for model, config, loss_weights in auto.tqdm(setup_list, desc='setups'):
+        model_name = model(**config).name
+        if (existing_df['method']==model_name).any():
+            print(f'benchmark is already done for {model_name}, skipping')
+            continue
         result = benchmark(model, config, splits, loss_weights, seed=seed, epochs=epochs, dataname=dataname)
         results.append(result)
         results_df = pd.DataFrame(results)
+        results_df = pd.concat([existing_df, results_df], axis=0)
         results_df['n'] = len(splits)
         results_df['epochs'] = epochs
 
@@ -209,7 +218,7 @@ def prepare_benchmark(dataname):
     setup_list.append((KMLaplace, KMLaplace_config, predictor_loss_weights))
     setup_list.append((JointPredictor, predictor_config, predictor_loss_weights))
 
-    result_file = f'hyperparam_selection/{dataname}_spectral.csv'
+    result_file = f'hyperparam_selection/{dataname}_Spectral.csv'
     if os.path.exists(result_file):
         scores = pd.read_csv(result_file, index_col=0)
         scores = scores.astype({'H_mean': 'float'})

@@ -61,3 +61,9 @@ class SpectralDTW(BaseModel):
         cluster = self.predict_cluster(x, t, mask)
         labels = self.cluster_y[cluster]
         return labels
+
+    def save(self, path='.', name=None):
+        pass
+
+    def load(self, filename):
+        pass
