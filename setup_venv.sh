@@ -47,5 +47,15 @@ else
   setup
 fi
 
-# start jupyter lab
-$ENV_NAME/bin/jupyter lab ./notebooks --port=9999
+if [[ $CONDA_PREFIX ]]; then
+  eval "$(conda shell.bash hook)"
+  conda activate ./$ENV_NAME
+  # start jupyter lab
+  taskset --cpu-list 0-2 jupyter lab ./notebooks --port=9999
+  conda deactivate
+elif [[ $PYENV_ROOT ]]; then
+  source $ENV_NAME/bin/activate
+  # start jupyter lab
+  taskset --cpu-list 0-2 jupyter lab ./notebooks --port=9999
+  deactivate
+fi
