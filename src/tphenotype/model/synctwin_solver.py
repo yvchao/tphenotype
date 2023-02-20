@@ -31,7 +31,7 @@ class AffinitySolver(torch.nn.Module):
 
     def _get_affinity(self, A):
         F = torch.zeros_like(A)
-        F[A != 1] = - 1/ EPS
+        F[A != 1] = -1 / EPS
         B = self.B + F
         B = torch.softmax(B, dim=-1)
         return B

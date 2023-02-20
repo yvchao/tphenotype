@@ -67,9 +67,9 @@ def evaluate(model, dataset, steps=[-1]):
     else:
         cls_scores = {}
 
-    mixed1 = 2/ (1/auc_scores.get('ROC',1e-10) + 1/cls_scores.get('Silhouette_auc',1e-10))
-    mixed2 = 2/ (1/auc_scores.get('PRC',1e-10) + 1/cls_scores.get('Silhouette_auc',1e-10))
-    scores = {'method': model.name, **auc_scores, **cls_scores, 'Hroc':mixed1,'Hprc':mixed2}
+    mixed1 = 2 / (1 / auc_scores.get('ROC', 1e-10) + 1 / cls_scores.get('Silhouette_auc', 1e-10))
+    mixed2 = 2 / (1 / auc_scores.get('PRC', 1e-10) + 1 / cls_scores.get('Silhouette_auc', 1e-10))
+    scores = {'method': model.name, **auc_scores, **cls_scores, 'Hroc': mixed1, 'Hprc': mixed2}
     return scores
 
 
@@ -85,17 +85,17 @@ def get_ci(series, decimals=3):
 
 
 def benchmark_old(method, config, dataset, loss_weights, steps=[-1], epochs=50, n=3, seed=0):
-    dtype='float32'
-    
+    dtype = 'float32'
+
     #train_set, valid_set, test_set = dataset
     #N, T, _ = dataset['x'].shape
 
     results = []
     for i in auto.tqdm(range(n), desc=f'{method.__name__}'):
-        train_set, test_set = data_split(dataset, test_size=0.2, random_state=seed+i, dtype=dtype)
-        train_set, valid_set = data_split(train_set, test_size=0.2, random_state=seed+i, dtype=dtype)
-    
-        torch.random.manual_seed(seed+i)
+        train_set, test_set = data_split(dataset, test_size=0.2, random_state=seed + i, dtype=dtype)
+        train_set, valid_set = data_split(train_set, test_size=0.2, random_state=seed + i, dtype=dtype)
+
+        torch.random.manual_seed(seed + i)
         model = method(**config)
         model = model.fit(train_set, loss_weights, valid_set=valid_set, epochs=epochs, verbose=False)
         scores = evaluate(model, test_set, steps)
@@ -104,15 +104,15 @@ def benchmark_old(method, config, dataset, loss_weights, steps=[-1], epochs=50, 
     summary = results.apply(get_ci)
     return summary
 
+
 def benchmark(method, config, splits, loss_weights, steps=[-1], epochs=50, seed=0):
-    dtype='float32'
-    
+    dtype = 'float32'
 
     results = []
-    for i,dataset in auto.tqdm(enumerate(splits), total=len(splits), desc=f'{method.__name__}'):
+    for i, dataset in auto.tqdm(enumerate(splits), total=len(splits), desc=f'{method.__name__}'):
         train_set, valid_set, test_set = dataset
-    
-        torch.random.manual_seed(seed+i)
+
+        torch.random.manual_seed(seed + i)
         model = method(**config)
         model = model.fit(train_set, loss_weights, valid_set=valid_set, epochs=epochs, verbose=False)
         scores = evaluate(model, test_set, steps)
@@ -164,10 +164,4 @@ Predictor_config = {
     'device': 'cuda',
 }
 
-loss_weights = {
-    'ce': 1.0,
-    'rmse': 1.0,
-    'cont':0.01,
-    'pole': 1.0,
-    'real': 0.1
-}
+loss_weights = {'ce': 1.0, 'rmse': 1.0, 'cont': 0.01, 'pole': 1.0, 'real': 0.1}

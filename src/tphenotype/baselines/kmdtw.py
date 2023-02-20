@@ -47,8 +47,9 @@ class KMDTW(BaseModel):
         initial_centers = kmeans_plusplus_initializer(x, self.K, random_state=0).initialize()
         initial_centers = np.array(initial_centers)
 
-        def distance_func(s1, s2, shape=(series_size, x_dim)): 
+        def distance_func(s1, s2, shape=(series_size, x_dim)):
             return dtw_distance(s1, s2, shape)
+
         metric = distance_metric(type_metric.USER_DEFINED, func=distance_func)
 
         # create K-Means algorithm with specific distance metric
@@ -64,10 +65,10 @@ class KMDTW(BaseModel):
         for i, c in enumerate(clusters):
             self.cluster_y[i] = np.mean(y[c], axis=0)
         return self
-    
+
     def save(self, path='.', name=None):
         pass
-    
+
     def load(self, filename):
         pass
 

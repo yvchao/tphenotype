@@ -4,6 +4,7 @@ from functools import wraps
 
 EPS = 1e-10
 
+
 def device_init(init):
 
     @wraps(init)
@@ -78,4 +79,3 @@ def run_in_batch(fn, batch_size=1000):
         return xs
 
     return decorate
-

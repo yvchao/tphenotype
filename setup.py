@@ -4,7 +4,9 @@ from Cython.Build import cythonize
 
 here = pathlib.Path(__file__).parent.resolve()
 cython_config = {
-        'compiler_directives':{'language_level':'3'},
+    'compiler_directives': {
+        'language_level': '3'
+    },
 }
 
 pkg = 'tphenotype'
@@ -14,6 +16,6 @@ extension = Extension('lexsort', sources=sources, extra_compile_args=["-std=c++1
 extensions = [extension]
 
 setup(
-    ext_package = f'{pkg}.utils',
-    ext_modules = cythonize(extensions,**cython_config),
+    ext_package=f'{pkg}.utils',
+    ext_modules=cythonize(extensions, **cython_config),
 )

@@ -11,7 +11,7 @@ from .predictor import Predictor
 class JointPredictor(Predictor):
 
     @device_init
-    def __init__(self,**kwargs):
+    def __init__(self, **kwargs):
 
         super().__init__(**kwargs)
 
@@ -22,9 +22,8 @@ class JointPredictor(Predictor):
         t = check_shape(t).to(self.device)
         x = x.to(self.device)
         with torch.no_grad():
-            out = self.forward({'x': x,'t':t})
+            out = self.forward({'x': x, 't': t})
         return out["prob"]
-    
 
     def forward(self, input):
         # t: batch_size x series_size
@@ -35,7 +34,7 @@ class JointPredictor(Predictor):
         x = input['x']
         #y = input['y']
         #mask = input['mask']
-        x_rep = self._encode(x,t).detach()
+        x_rep = self._encode(x, t).detach()
 
         z = self.g(x_rep)
         prob = self._get_probs(z)
@@ -59,12 +58,12 @@ class JointPredictor(Predictor):
 
         losses = {}
         losses['ce'] = cross_entropy(y_pred, y, mask=mask[:, :])
-        
+
         for i, d in enumerate(self.time_series_dims):
             x_d = x[:, :, d]
-            encoder_losses = self.encoders[i].expose_loss(x_d,t,mask)
-            for k,v in encoder_losses.items():
-                losses[k] = losses.get(k,0.0) + v / len(self.time_series_dims)
+            encoder_losses = self.encoders[i].expose_loss(x_d, t, mask)
+            for k, v in encoder_losses.items():
+                losses[k] = losses.get(k, 0.0) + v / len(self.time_series_dims)
         return losses
 
     def _calculate_valid_losses(self, batch):
@@ -79,10 +78,11 @@ class JointPredictor(Predictor):
         losses = {}
         losses['ce'] = cross_entropy(y_pred, y, mask=mask.cpu())
 
-        for i,d in enumerate(self.time_series_dims):
-            x_d = x[:,:,d]
-            encoder_losses = self.encoders[i].expose_loss(x_d,t,mask)
-            losses['rmse'] = losses.get('rmse',0.0) + encoder_losses['rmse'].detach().cpu() / len(self.time_series_dims)
+        for i, d in enumerate(self.time_series_dims):
+            x_d = x[:, :, d]
+            encoder_losses = self.encoders[i].expose_loss(x_d, t, mask)
+            losses['rmse'] = losses.get('rmse',
+                                        0.0) + encoder_losses['rmse'].detach().cpu() / len(self.time_series_dims)
         #
 
         AUROC, AUPRC = get_auc_scores(y, y_pred, mask=mask.cpu())
@@ -90,7 +90,6 @@ class JointPredictor(Predictor):
         losses['AUPRC'] = torch.tensor(np.mean(AUPRC))
 
         return losses
-
 
     def fit(self,
             train_set,
@@ -115,7 +114,7 @@ class JointPredictor(Predictor):
         mask = train_set['mask']
 
         self.cls.verbose = verbose
-        if self.cls.K>0:
+        if self.cls.K > 0:
             self.cls.fit(x, t, mask)
         if verbose:
             print(f'done')

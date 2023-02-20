@@ -11,15 +11,14 @@ from ..utils.decorators import numpy_io
 class KME2P(E2P):
 
     def __init__(self, K: int, **kwargs):
-        
-        if kwargs.get('latent_space','z')!='z':
+
+        if kwargs.get('latent_space', 'z') != 'z':
             kwargs['latent_size'] = kwargs['hidden_size']
-            
+
         super(KME2P, self).__init__(**kwargs)
 
         self.K = K
         self.name = f'KM-E2P({self.latent_space})'
-        
 
     def fit(self, train_set, loss_weights, **kwargs):
         # train the neural network first
@@ -44,9 +43,8 @@ class KME2P(E2P):
         self.centers = np.array(self.kmeans_instance.get_centers()).astype('float32')
         return self
 
-
     def predict_proba_g(self, x, t):
-        proba = super().predict_proba(x,t)
+        proba = super().predict_proba(x, t)
         return proba
 
     def predict_proba(self, x, t):
@@ -60,12 +58,12 @@ class KME2P(E2P):
             with torch.no_grad():
                 z = torch.from_numpy(z).to(self.device)
                 logits = self.predictor(z)
-                probs = torch.softmax(logits,dim=-1).cpu().numpy()
+                probs = torch.softmax(logits, dim=-1).cpu().numpy()
         elif self.latent_space == 'y-1':
             z = self.centers[cluster_idx.reshape((-1,))]
             with torch.no_grad():
                 z = torch.from_numpy(z).to(self.device)
-                probs = torch.softmax(z,dim=-1).cpu().numpy()
+                probs = torch.softmax(z, dim=-1).cpu().numpy()
         else:
             raise NotImplementedError()
 

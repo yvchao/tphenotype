@@ -42,13 +42,13 @@ def cut_windowed_data(t, x, y, m, window_size=10, steps=[-1], range_mask=False):
     x_sel = select_by_steps(x, m, steps, sub_sequence=True, keepdims=True)
     t_sel = select_by_steps(t, m, steps, sub_sequence=True)
     y_sel = select_by_steps(y, m, steps, sub_sequence=True, keepdims=True)
-    t_start = np.max(t_sel,axis=-1, keepdims=True) - window_size
-    mask_sel[t_sel<=t_start]=0
+    t_start = np.max(t_sel, axis=-1, keepdims=True) - window_size
+    mask_sel[t_sel <= t_start] = 0
     max_length = np.max(mask_sel.sum(axis=-1)).astype('int')
-    x_sel = reverse_seq(x_sel, mask_sel)[:,:max_length]
-    t_sel = reverse_seq(t_sel, mask_sel)[:,:max_length] 
-    y_sel = reverse_seq(y_sel, mask_sel)[:,:max_length] 
-    m_sel = reverse_seq(mask_sel, mask_sel)[:,:max_length] 
+    x_sel = reverse_seq(x_sel, mask_sel)[:, :max_length]
+    t_sel = reverse_seq(t_sel, mask_sel)[:, :max_length]
+    y_sel = reverse_seq(y_sel, mask_sel)[:, :max_length]
+    m_sel = reverse_seq(mask_sel, mask_sel)[:, :max_length]
     end_mask = np.zeros_like(m_sel)
     end_mask[np.arange(len(m_sel)), m_sel.sum(axis=-1).astype('int') - 1] = 1
     if not range_mask:

@@ -96,8 +96,7 @@ class NNBaseModel(BaseModel, torch.nn.Module):
 
     def _prepare_dataset(self, train_set, valid_set, batch_size):
         train_set = Dataset(train_set)
-        train_set = torch.utils.data.DataLoader(
-            train_set, batch_size=batch_size, shuffle=True, drop_last=True)
+        train_set = torch.utils.data.DataLoader(train_set, batch_size=batch_size, shuffle=True, drop_last=True)
 
         if valid_set is not None:
             valid_set = Dataset(valid_set)
@@ -169,8 +168,8 @@ class NNBaseModel(BaseModel, torch.nn.Module):
         state_dict = self.state_dict()
         save_name = name if name is not None else f'{self.name}.pt'
         torch.save(state_dict, f'{path}/{save_name}')
-    
+
     def load(self, filename):
-        state_dict = torch.load(filename,map_location='cpu')
+        state_dict = torch.load(filename, map_location='cpu')
         self.load_state_dict(state_dict)
         return self.to(self.device)

@@ -382,7 +382,19 @@ class Predictor(NNBaseModel):
             # enable sorting of the poles to obtain equivariant representation
             encoder.equivariant_embed = True
 
-    def evaluate_encoder_params(self, train_set, test_set, loss_weights, valid_set=None, learning_rate=0.1, batch_size=50, epochs=100, max_grad_norm=1,tolerance=None, device=None, verbose=True, **kwargs):
+    def evaluate_encoder_params(self,
+                                train_set,
+                                test_set,
+                                loss_weights,
+                                valid_set=None,
+                                learning_rate=0.1,
+                                batch_size=50,
+                                epochs=100,
+                                max_grad_norm=1,
+                                tolerance=None,
+                                device=None,
+                                verbose=True,
+                                **kwargs):
         args = locals().copy()    # shallow copy
         # remove the self variable
         args.pop('self')
@@ -399,17 +411,16 @@ class Predictor(NNBaseModel):
             poles, coeffs = encoder.encode(f, t)
             # batch_size x series_size x series_size
             batch_size, series_size = f.shape
-            last_step = np.sum(m,axis=-1).astype('int') - 1
-            f_rec_r,f_rec_i = encoder.decode(poles, coeffs, t)
-            f_rec = f_rec_r + 1j*f_rec_i
-            f_rec = f_rec[np.arange(batch_size),last_step]
+            last_step = np.sum(m, axis=-1).astype('int') - 1
+            f_rec_r, f_rec_i = encoder.decode(poles, coeffs, t)
+            f_rec = f_rec_r + 1j * f_rec_i
+            f_rec = f_rec[np.arange(batch_size), last_step]
             diff = np.square(np.abs(f - f_rec))
-            diff = np.sum(diff*m, axis=-1) / (np.sum(m,axis=-1)+EPS)
+            diff = np.sum(diff * m, axis=-1) / (np.sum(m, axis=-1) + EPS)
             loss += np.mean(diff)
         loss /= len(self.time_series_dims)
-        return loss 
-    
-    
+        return loss
+
     def _fit_predictor(self, train_set, loss_weights, valid_set, args, learning_rate, verbose):
         predictor_args = args.copy()
         predictor_args['train_set'] = self._encode_dataset(train_set)
@@ -421,9 +432,20 @@ class Predictor(NNBaseModel):
         if verbose:
             print(f'stage 2 - fit the predictor')
         super().fit(**predictor_args)
-        
-        
-    def evaluate_predictor_params(self, train_set, test_set, loss_weights, valid_set=None, learning_rate=0.1, batch_size=50, epochs=100, max_grad_norm=1,tolerance=None, device=None, verbose=True, **kwargs):
+
+    def evaluate_predictor_params(self,
+                                  train_set,
+                                  test_set,
+                                  loss_weights,
+                                  valid_set=None,
+                                  learning_rate=0.1,
+                                  batch_size=50,
+                                  epochs=100,
+                                  max_grad_norm=1,
+                                  tolerance=None,
+                                  device=None,
+                                  verbose=True,
+                                  **kwargs):
         args = locals().copy()    # shallow copy
         # remove the self variable
         args.pop('self')
@@ -434,19 +456,18 @@ class Predictor(NNBaseModel):
         t = test_set['t']
         y = test_set['y']
         mask = test_set['mask']
-        y_pred = self.predict_proba_g(x,t)
+        y_pred = self.predict_proba_g(x, t)
         AUROC, AUPRC = get_auc_scores(y, y_pred, mask=mask)
         loss = np.mean(AUROC)
-        return loss 
-    
-    def fit_clusters(self,train_set,verbose):
+        return loss
+
+    def fit_clusters(self, train_set, verbose):
         x = train_set['x']
         t = train_set['t']
         mask = train_set['mask']
 
         self.cls.verbose = verbose
         self.cls.fit(x, t, mask)
-        
 
     def fit(self,
             train_set,
@@ -466,7 +487,7 @@ class Predictor(NNBaseModel):
         args.pop('self')
 
         # stage 1 - train the encoder
-        if args.get('skip_encoder',False):
+        if args.get('skip_encoder', False):
             if verbose:
                 print('skip training the encoder')
         else:
@@ -484,19 +505,21 @@ class Predictor(NNBaseModel):
         # if verbose:
         #     print(f'stage 2 - fit the predictor')
         # super().fit(**predictor_args)
-        
+
         self._fit_predictor(train_set, loss_weights, valid_set, args, learning_rate, verbose)
 
         # stage 3 - clustering based on similarity graph
         if verbose:
             print(f'stage 3 - clustering on similarity graph')
+
+
 #         x = train_set['x']
 #         t = train_set['t']
 #         mask = train_set['mask']
 
 #         self.cls.verbose = verbose
 #         self.cls.fit(x, t, mask)
-        self.fit_clusters(train_set,verbose)
+        self.fit_clusters(train_set, verbose)
         if verbose:
             print(f'done')
 

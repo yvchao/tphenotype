@@ -27,13 +27,9 @@ class MLP(torch.nn.Module):
         elif self.num_layers == 1:
             modules = [torch.nn.Linear(self.input_size, self.output_size, bias=self.bias)]
         elif self.num_layers >= 2:
-            modules = [
-                torch.nn.Linear(self.input_size, self.hidden_size, bias=self.bias), self.activation
-            ]
+            modules = [torch.nn.Linear(self.input_size, self.hidden_size, bias=self.bias), self.activation]
             for i in range(0, self.num_layers - 2, 1):
-                modules = modules + [
-                    torch.nn.Linear(self.hidden_size, self.hidden_size, bias=bias), self.activation
-                ]
+                modules = modules + [torch.nn.Linear(self.hidden_size, self.hidden_size, bias=bias), self.activation]
 
             modules = modules + [torch.nn.Linear(self.hidden_size, self.output_size, bias=bias)]
         else:
@@ -58,8 +54,7 @@ class GRU(torch.nn.Module):
 
         self.h0 = torch.nn.Parameter(torch.zeros((self.num_layers, 1, self.hidden_size)))
 
-        self.rnn = torch.nn.GRU(
-            self.input_size, self.hidden_size, self.num_layers, batch_first=True)
+        self.rnn = torch.nn.GRU(self.input_size, self.hidden_size, self.num_layers, batch_first=True)
 
     def forward(self, x):
         batch_size, _, _ = x.shape
@@ -80,8 +75,7 @@ class LSTM(torch.nn.Module):
         self.h0 = torch.nn.Parameter(torch.zeros((self.num_layers, 1, self.hidden_size)))
         self.c0 = torch.nn.Parameter(torch.zeros((self.num_layers, 1, self.hidden_size)))
 
-        self.rnn = torch.nn.LSTM(
-            self.input_size, self.hidden_size, self.num_layers, batch_first=True)
+        self.rnn = torch.nn.LSTM(self.input_size, self.hidden_size, self.num_layers, batch_first=True)
 
     def forward(self, x):
         batch_size, _, _ = x.shape
