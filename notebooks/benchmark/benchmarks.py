@@ -103,7 +103,7 @@ def run_benchmark(dataname, splits, setup_list, seed=0, epochs=50):
     epochs = 50
     for model, config, loss_weights in auto.tqdm(setup_list, desc='setups'):
         model_name = model(**config).name
-        if (existing_df['method']==model_name).any():
+        if (existing_df['method'] == model_name).any():
             print(f'benchmark is already done for {model_name}, skipping')
             continue
         result = benchmark(model, config, splits, loss_weights, seed=seed, epochs=epochs, dataname=dataname)
@@ -225,7 +225,7 @@ def prepare_benchmark(dataname):
         best = scores['H_mean'].idxmax()
         config_spectral = read_config(scores.loc[best, 'config'])
 
-        spectral_config = {'K':K, 'sigma':float(config_spectral['sigma'])}
+        spectral_config = {'K': K, 'sigma': float(config_spectral['sigma'])}
         setup_list.append((SpectralDTW, spectral_config, loss_weights))
     return splits, setup_list
 

@@ -119,7 +119,13 @@ def hyperparam_selection_cluster(dataname, search_space, predictor_config, loss_
         predictor_config['cls_config'] = test_config
 
         results, model = evaluate_cluster(
-            Predictor, predictor_config, loss_weights, splits, seed=seed, epochs=epochs, cache_name=f'hs_orig-{dataname}')
+            Predictor,
+            predictor_config,
+            loss_weights,
+            splits,
+            seed=seed,
+            epochs=epochs,
+            cache_name=f'hs_orig-{dataname}')
         scores.loc[i, 'H_mean'] = np.mean(results)
         scores.loc[i, 'H_std'] = np.std(results)
         scores.loc[i, 'config'] = msg

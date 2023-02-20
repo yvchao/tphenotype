@@ -104,7 +104,7 @@ def hyperparam_selection_encoder(dataname, search_space, seed=0, epochs=50):
 
     scores = pd.DataFrame(columns=['mse_mean', 'mse_std', 'config'])
     for i, comb in enumerate(itertools.product(*search_space.values())):
-        if len(comb)==0:
+        if len(comb) == 0:
             continue
         test_config = encoder_config.copy()
         test_loss_weights = loss_weights.copy()

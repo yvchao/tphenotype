@@ -103,7 +103,8 @@ def hyperparam_selection_predictor(dataname, search_space, K, seed=0, epochs=50)
         print(f'test config {msg} ...')
 
         metric = 'Hprc' if dataname != 'Synth' else 'PURITY'
-        results, model = evaluate_predictor(KME2P, test_config, loss_weights, splits, seed=seed, epochs=epochs, metric=metric)
+        results, model = evaluate_predictor(
+            KME2P, test_config, loss_weights, splits, seed=seed, epochs=epochs, metric=metric)
         scores.loc[i, 'H_mean'] = np.mean(results)
         scores.loc[i, 'H_std'] = np.std(results)
         scores.loc[i, 'config'] = msg
@@ -144,7 +145,7 @@ for dataname in ['Synth', 'ICU', 'ADNI']:
 
     K = int(config['K'])
     if dataname == 'Synth':
-        K=3
+        K = 3
 
     hyperparam_selection_predictor(dataname, search_space, K)
 
