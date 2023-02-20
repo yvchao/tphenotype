@@ -1,6 +1,6 @@
 # T-Phenotype: Discovering Phenotypes of Predictive Temporal Patterns in Disease Progression (AISTATS2023)
 
-Source code for the T-Phenotype clustering approach proposed in paper "T-Phenotype: Discovering Phenotypes of Predictive Temporal Patterns in Disease Progression"
+Source code for the T-Phenotype approach proposed in paper "T-Phenotype: Discovering Phenotypes of Predictive Temporal Patterns in Disease Progression"
 
 ## Installation & Environment Setup
 
@@ -14,7 +14,7 @@ Ensure you have [conda](https://docs.conda.io/en/latest/miniconda.html) or [pyen
 bash ./setup_venv.sh
 ```
 This will install the **tphenotype** package along with necessary dependencies to reproduce the experiment results.
-A jupyter lab instance will be started, and the **notebook** directory will be opened in your browser.
+A jupyter lab instance will be started, and the **notebooks** directory will be opened in your browser.
 
 ## Datasets and Preparation
 
