@@ -31,8 +31,7 @@ There are three major parts of the experiment.
 - case_study: run experiment_adni.ipynb to generate the major results in the main manuscript.
 - appendix: run the four notebooks to generate all the rest results included in the appendix.
 
-All reported results in notebooks are generated with Python environment installed through pyenv 2.3.13. 
-The the experiment machine has Linux kernel 6.1.12 and GCC 12.2.1 installed.
+All reported results in these notebooks are generated with Python environment installed through pyenv 2.3.13 on a machine with Linux kernel 6.1.12 and GCC 12.2.1.
 Consider setting CPU affinity via e.g. `taskset --cpu-list 0-2` if some results cannot be reproduced identically.
 
 ## Citation
