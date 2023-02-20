@@ -6,8 +6,8 @@ export CUBLAS_WORKSPACE_CONFIG=:4096:8
 echo "hparams selection for TPhenotype"
 echo "encoders"
 python hs_encoder.py
-echo "predictor"
-python hs_predictor.py
+# echo "predictor"
+# python hs_predictor.py
 # echo "K"
 # python hs_K.py
 echo "K orig"
