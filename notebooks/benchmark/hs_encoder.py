@@ -99,9 +99,13 @@ def hyperparam_selection_encoder(dataname, search_space, seed=0, epochs=50):
     print('T_phenotype config:')
     print(predictor_config)
     result_file = f'hyperparam_selection/{dataname}_encoder.csv'
+    if os.path.exists(result_file):
+        search_space = {}
 
     scores = pd.DataFrame(columns=['mse_mean', 'mse_std', 'config'])
     for i, comb in enumerate(itertools.product(*search_space.values())):
+        if len(comb)==0:
+            continue
         test_config = encoder_config.copy()
         test_loss_weights = loss_weights.copy()
         msg = []

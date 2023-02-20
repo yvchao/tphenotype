@@ -2,7 +2,7 @@
 export CUDA_VISIBLE_DEVICES=-1
 
 ENV_NAME="venv"
-PYTHON_VERSION="3.7.13"
+PYTHON_VERSION="3.7.12"
 EPOCHS=200
 
 install_pkg()

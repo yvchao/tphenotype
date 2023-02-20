@@ -102,7 +102,8 @@ def hyperparam_selection_predictor(dataname, search_space, K, seed=0, epochs=50)
         msg = ','.join(msg)
         print(f'test config {msg} ...')
 
-        results, model = evaluate_predictor(KME2P, test_config, loss_weights, splits, seed=seed, epochs=epochs)
+        metric = 'Hprc' if dataname != 'Synth' else 'PURITY'
+        results, model = evaluate_predictor(KME2P, test_config, loss_weights, splits, seed=seed, epochs=epochs, metric=metric)
         scores.loc[i, 'H_mean'] = np.mean(results)
         scores.loc[i, 'H_std'] = np.std(results)
         scores.loc[i, 'config'] = msg
@@ -134,7 +135,7 @@ search_space = {
 }
 
 for dataname in ['Synth', 'ICU', 'ADNI']:
-    result_file = f'hyperparam_selection/{dataname}_K.csv'
+    result_file = f'hyperparam_selection/{dataname}_K_orig.csv'
     scores = pd.read_csv(result_file, index_col=0)
     scores = scores.astype({'H_mean': 'float'})
     best = scores['H_mean'].idxmax()

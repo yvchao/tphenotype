@@ -12,8 +12,8 @@ class KME2P(E2P):
 
     def __init__(self, K: int, **kwargs):
 
-        if kwargs.get('latent_space', 'z') != 'z':
-            kwargs['latent_size'] = kwargs['hidden_size']
+        # if kwargs.get('latent_space', 'z') != 'z':
+        #     kwargs['latent_size'] = kwargs['hidden_size']
 
         super(KME2P, self).__init__(**kwargs)
 

@@ -10,7 +10,7 @@ import torch
 import os
 import json
 from tphenotype import LaplaceEncoder, Predictor, JointPredictor
-from tphenotype.baselines import E2P, KME2P, KMDTW, KMLaplace
+from tphenotype.baselines import E2P, KME2P, KMDTW, KMLaplace, SpectralDTW
 from tphenotype.utils import get_auc_scores, get_cls_scores, select_by_steps
 from benchmark import benchmark, evaluate, KME2P_config, Predictor_config, Encoder_config, Cls_config, loss_weights
 
@@ -100,11 +100,11 @@ def run_benchmark(dataname, splits, setup_list, seed=0, epochs=50):
     for model, config, loss_weights in auto.tqdm(setup_list, desc='setups'):
         result = benchmark(model, config, splits, loss_weights, seed=seed, epochs=epochs, dataname=dataname)
         results.append(result)
-    results = pd.DataFrame(results)
-    results['n'] = len(splits)
-    results['epochs'] = epochs
+        results_df = pd.DataFrame(results)
+        results_df['n'] = len(splits)
+        results_df['epochs'] = epochs
 
-    results.to_csv(result_file)
+        results_df.to_csv(result_file)
 
     return results
 
@@ -129,13 +129,13 @@ def prepare_benchmark(dataname):
     best = scores['mse_mean'].idxmin()
     config_encoders = read_config(scores.loc[best, 'config'])
 
-    result_file = f'hyperparam_selection/{dataname}_predictor.csv'
-    scores = pd.read_csv(result_file, index_col=0)
-    scores = scores.astype({'roc_mean': 'float'})
-    best = scores['roc_mean'].idxmax()
-    config_predictor = read_config(scores.loc[best, 'config'])
+    # result_file = f'hyperparam_selection/{dataname}_predictor.csv'
+    # scores = pd.read_csv(result_file, index_col=0)
+    # scores = scores.astype({'roc_mean': 'float'})
+    # best = scores['roc_mean'].idxmax()
+    # config_predictor = read_config(scores.loc[best, 'config'])
 
-    result_file = f'hyperparam_selection/{dataname}_K.csv'
+    result_file = f'hyperparam_selection/{dataname}_K_orig.csv'
     scores = pd.read_csv(result_file, index_col=0)
     scores = scores.astype({'H_mean': 'float'})
     best = scores['H_mean'].idxmax()
@@ -200,8 +200,8 @@ def prepare_benchmark(dataname):
     predictor_config['time_series_dims'] = temporal_dims
     predictor_config['cls_config'] = cls_config
     predictor_config['encoder_config'] = encoder_config
-    predictor_config['hidden_size'] = int(config_predictor['hidden_size'])
-    predictor_config['num_layer'] = int(config_predictor['num_layer'])
+    # predictor_config['hidden_size'] = int(config_predictor['hidden_size'])
+    # predictor_config['num_layer'] = int(config_predictor['num_layer'])
     setup_list.append((Predictor, predictor_config, predictor_loss_weights))
 
     KMLaplace_config = predictor_config.copy()
@@ -209,6 +209,15 @@ def prepare_benchmark(dataname):
     setup_list.append((KMLaplace, KMLaplace_config, predictor_loss_weights))
     setup_list.append((JointPredictor, predictor_config, predictor_loss_weights))
 
+    result_file = f'hyperparam_selection/{dataname}_spectral.csv'
+    if os.path.exists(result_file):
+        scores = pd.read_csv(result_file, index_col=0)
+        scores = scores.astype({'H_mean': 'float'})
+        best = scores['H_mean'].idxmax()
+        config_spectral = read_config(scores.loc[best, 'config'])
+
+        spectral_config = {'K':K, 'sigma':float(config_spectral['sigma'])}
+        setup_list.append((SpectralDTW, spectral_config, loss_weights))
     return splits, setup_list
 
 

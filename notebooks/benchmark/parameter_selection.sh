@@ -8,8 +8,10 @@ echo "encoders"
 python hs_encoder.py
 echo "predictor"
 python hs_predictor.py
-echo "K"
-python hs_K.py
+# echo "K"
+# python hs_K.py
+echo "K orig"
+python hs_K_orig.py
 
 echo "hparams selection for baselines"
 echo "E2Py"
