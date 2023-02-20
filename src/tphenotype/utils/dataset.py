@@ -86,5 +86,5 @@ class Dataset(torch.utils.data.Dataset):
             elif isinstance(v, np.ndarray):
                 ret[k] = torch.from_numpy(v)
             else:
-                raise ValueError(f"Unknown data type {type(v)} for {k}.")
+                raise ValueError(f'Unknown data type {type(v)} for {k}.')
         return ret

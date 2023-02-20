@@ -23,7 +23,7 @@ class JointPredictor(Predictor):
         x = x.to(self.device)
         with torch.no_grad():
             out = self.forward({'x': x, 't': t})
-        return out["prob"]
+        return out['prob']
 
     def forward(self, input):
         # t: batch_size x series_size
@@ -40,7 +40,7 @@ class JointPredictor(Predictor):
         prob = self._get_probs(z)
 
         out = {}
-        out["prob"] = prob
+        out['prob'] = prob
         return out
 
     def _calculate_train_losses(self, batch):

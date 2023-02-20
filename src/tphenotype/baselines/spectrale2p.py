@@ -23,7 +23,7 @@ class SpectralDTW(BaseModel):
 
     def __init__(self, K, sigma, **kwargs):
         super().__init__()
-        self.name = "Spectral-DTW-D"
+        self.name = 'Spectral-DTW-D'
         self.K = K
         self.sigma = sigma
 

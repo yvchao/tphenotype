@@ -172,7 +172,7 @@ class Predictor(NNBaseModel):
         prob = self._get_probs(z)
 
         out = {}
-        out["prob"] = prob
+        out['prob'] = prob
         return out
 
     @numpy_io
@@ -182,7 +182,7 @@ class Predictor(NNBaseModel):
         with torch.no_grad():
             x_rep = self._encode(x, t)
             out = self.forward({'x_rep': x_rep})
-        return out["prob"]
+        return out['prob']
 
     @numpy_io
     @run_in_batch

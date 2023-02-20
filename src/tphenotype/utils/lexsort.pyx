@@ -10,7 +10,7 @@ ctypedef fused float_t:
     double
 
 cdef extern from * nogil:
-    """
+    '''
     #include <vector>
     #include <numeric>      // std::iota
     #include <algorithm> 
@@ -40,7 +40,7 @@ cdef extern from * nogil:
 
       return idx;
     }
-    """
+    '''
     vector[int] sort_indexes[Iter](const Iter &first, int length, double threshold)  except +
 
 

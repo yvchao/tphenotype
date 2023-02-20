@@ -32,7 +32,7 @@ class KMDTW(BaseModel):
 
     def __init__(self, K, **kwargs):
         super().__init__()
-        self.name = "KM-DTW-D"
+        self.name = 'KM-DTW-D'
         self.K = K
 
     def fit(self, train_set, *args, **kwargs):
