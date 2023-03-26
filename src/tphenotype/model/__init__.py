@@ -3,7 +3,7 @@ from .predictor import Predictor
 from .predictor_joint import JointPredictor
 
 __all__ = [
-    'LaplaceEncoder',
-    'Predictor',
-    'JointPredictor',
+    "LaplaceEncoder",
+    "Predictor",
+    "JointPredictor",
 ]

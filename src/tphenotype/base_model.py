@@ -1,26 +1,25 @@
 import abc
-import torch
+
 import numpy as np
+import torch
 from tqdm import auto
 
-from .utils.utils import get_summary, calculate_loss
-from .utils.dataset import Dataset
 from .utils.aggregator import MetricAggregator
+from .utils.dataset import Dataset
+from .utils.utils import calculate_loss, get_summary
 
 
 class BaseModel(object, metaclass=abc.ABCMeta):
-
     @abc.abstractmethod
     def fit(self, train_set):
         pass
 
 
 class NNBaseModel(BaseModel, torch.nn.Module):
-
     def __init__(self) -> None:
         super().__init__()
-        self.name = 'Base Model'
-        self.device = 'cpu'
+        self.name = "Base Model"
+        self.device = "cpu"
 
     @abc.abstractmethod
     def forward(self, X):
@@ -48,7 +47,7 @@ class NNBaseModel(BaseModel, torch.nn.Module):
             L.to(self.device)
 
             metrics = {k: v.detach().item() for k, v in losses.items()}
-            metrics['total'] = L.detach().cpu().item()
+            metrics["total"] = L.detach().cpu().item()
             agg.update(metrics)
 
             if L.requires_grad:
@@ -57,7 +56,7 @@ class NNBaseModel(BaseModel, torch.nn.Module):
                 optimizer.step()
 
         metrics_train = agg.query()
-        loss_train = metrics_train.pop('total')
+        loss_train = metrics_train.pop("total")
         return loss_train, metrics_train
 
     def _valid_epoch(self, loss_weights, valid_set):
@@ -103,22 +102,24 @@ class NNBaseModel(BaseModel, torch.nn.Module):
             valid_set = valid_set.get_all_data()
         return train_set, valid_set
 
-    def fit(self,
-            train_set,
-            loss_weights,
-            valid_set=None,
-            learning_rate=0.1,
-            batch_size=50,
-            epochs=100,
-            max_grad_norm=1,
-            tolerance=None,
-            parameters=None,
-            return_history=False,
-            verbose=True,
-            **kwargs):
+    def fit(
+        self,
+        train_set,
+        loss_weights,
+        valid_set=None,
+        learning_rate=0.1,
+        batch_size=50,
+        epochs=100,
+        max_grad_norm=1,
+        tolerance=None,
+        parameters=None,
+        return_history=False,
+        verbose=True,
+        **kwargs,
+    ):
         loss_history = {}
-        loss_history['train'] = np.full(epochs, np.NaN)
-        loss_history['valid'] = np.full(epochs, np.NaN)
+        loss_history["train"] = np.full(epochs, np.NaN)
+        loss_history["valid"] = np.full(epochs, np.NaN)
 
         train_set, valid_set = self._prepare_dataset(train_set, valid_set, batch_size)
 
@@ -131,11 +132,12 @@ class NNBaseModel(BaseModel, torch.nn.Module):
         with auto.trange(epochs, position=0, leave=True, disable=not verbose) as tbar:
             for epoch in tbar:
                 loss_train, metrics_train = self._train_epoch(
-                    loss_weights, train_set, optimizer, max_grad_norm=max_grad_norm, **kwargs)
-                loss_history['train'][epoch] = loss_train
+                    loss_weights, train_set, optimizer, max_grad_norm=max_grad_norm, **kwargs
+                )
+                loss_history["train"][epoch] = loss_train
 
                 loss_valid, metrics_valid = self._valid_epoch(loss_weights, valid_set)
-                loss_history['valid'][epoch] = loss_valid
+                loss_history["valid"][epoch] = loss_valid
 
                 if loss_valid is not None:
                     if best_validation_loss > loss_valid:
@@ -153,7 +155,7 @@ class NNBaseModel(BaseModel, torch.nn.Module):
 
                 summary_train = get_summary(metrics_train)
                 summary_valid = get_summary(metrics_valid)
-                summary = f'tr-{summary_train}|vl-{summary_valid}'
+                summary = f"tr-{summary_train}|vl-{summary_valid}"
                 tbar.set_description(summary)
 
         if best_model != {}:
@@ -164,12 +166,12 @@ class NNBaseModel(BaseModel, torch.nn.Module):
         else:
             return self
 
-    def save(self, path='.', name=None):
+    def save(self, path=".", name=None):
         state_dict = self.state_dict()
-        save_name = name if name is not None else f'{self.name}.pt'
-        torch.save(state_dict, f'{path}/{save_name}')
+        save_name = name if name is not None else f"{self.name}.pt"
+        torch.save(state_dict, f"{path}/{save_name}")
 
     def load(self, filename):
-        state_dict = torch.load(filename, map_location='cpu')
+        state_dict = torch.load(filename, map_location="cpu")
         self.load_state_dict(state_dict)
         return self.to(self.device)

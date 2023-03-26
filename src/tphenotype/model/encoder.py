@@ -1,17 +1,18 @@
-import torch
 import numpy as np
+import torch
+
 from ..base_model import NNBaseModel
 from ..nn import TimeSeriesEncoder
 from ..utils import sort_complex
-from ..utils.utils import check_shape, EPS
 from ..utils.decorators import device_init, numpy_io
-from .symbolic_eval import get_transfer_function, get_function, plot
+from ..utils.utils import EPS, check_shape
+from .symbolic_eval import get_function, get_transfer_function, plot
 
 
 def pairwise_distances(x):
-    #x should be at least two dimensional
+    # x should be at least two dimensional
     diff = x[..., :, np.newaxis, :] - x[..., np.newaxis, :, :]
-    dist = torch.norm(diff, p='fro', dim=-1)
+    dist = torch.norm(diff, p="fro", dim=-1)
     return dist
 
 
@@ -26,42 +27,46 @@ def find_similar_series(curves, threshold):
 
 
 class LaplaceEncoder(NNBaseModel):
-
     @device_init
-    def __init__(self,
-                 num_poles=4,
-                 max_degree=1,
-                 pole_separation=0.1,
-                 freq_scaler=10.0,
-                 coeff_scaler=5.0,
-                 window_size=None,
-                 hidden_size=20,
-                 num_layers=2,
-                 equivariant_embed=True,
-                 **kwargs):
+    def __init__(
+        self,
+        num_poles=4,
+        max_degree=1,
+        pole_separation=0.1,
+        freq_scaler=10.0,
+        coeff_scaler=5.0,
+        window_size=None,
+        hidden_size=20,
+        num_layers=2,
+        equivariant_embed=True,
+        **kwargs,
+    ):
         super().__init__()
-        self.name = 'Laplace Encoder'
-        self.num_poles = num_poles    # number of poles in the lapace transform
-        self.max_degree = max_degree    # maximum degree of poles in the lapace transform
+        self.name = "Laplace Encoder"
+        self.num_poles = num_poles  # number of poles in the lapace transform
+        self.max_degree = max_degree  # maximum degree of poles in the lapace transform
         assert self.num_poles >= 2
         assert self.max_degree >= 1
-        self.window_size = window_size    # window size
+        self.window_size = window_size  # window size
         self.embed_size = 2 * (self.num_poles + self.max_degree * self.num_poles)
 
         self.freq_scaler = freq_scaler
         assert self.freq_scaler >= 1
-        self.pole_range = {'re': [-10, 10], 'im': [-freq_scaler, freq_scaler]}
-        self.coeff_range = {'max': coeff_scaler}
+        self.pole_range = {"re": [-10, 10], "im": [-freq_scaler, freq_scaler]}
+        self.coeff_range = {"max": coeff_scaler}
 
-        self.hidden_size = hidden_size    # hidden unit number of rnn and mlp
-        self.num_layers = num_layers    # layer number of mlp
-        self.delta_pole = pole_separation    # threshold for identical poles: |p_i-p_j|< \delta => identical
+        self.hidden_size = hidden_size  # hidden unit number of rnn and mlp
+        self.num_layers = num_layers  # layer number of mlp
+        self.delta_pole = pole_separation  # threshold for identical poles: |p_i-p_j|< \delta => identical
         assert self.delta_pole >= 0
-        self.equivariant_embed = equivariant_embed    # whether or not to reorder the poles to get an equivariant representation
+        self.equivariant_embed = (
+            equivariant_embed  # whether or not to reorder the poles to get an equivariant representation
+        )
 
         # encoder = rnn (1 layer) + mlp (num_layer layers)
         self.encoder = TimeSeriesEncoder(
-            input_size=2, output_size=self.embed_size, hidden_size=self.hidden_size, num_layers=self.num_layers)
+            input_size=2, output_size=self.embed_size, hidden_size=self.hidden_size, num_layers=self.num_layers
+        )
 
     def get_embed_size(self):
         return self.embed_size
@@ -128,12 +133,12 @@ class LaplaceEncoder(NNBaseModel):
         poles = torch.view_as_real(poles)
         coeffs = torch.view_as_real(coeffs)
         if normalize:
-            re_min, re_max = self.pole_range['re']
+            re_min, re_max = self.pole_range["re"]
             poles_re = poles[:, :, :, 0] / max(-re_min, re_max)
             poles_im = poles[:, :, :, 1] / self.freq_scaler
             poles = torch.stack([poles_re, poles_im], dim=-1)
 
-            coeffs = coeffs / self.coeff_range['max']
+            coeffs = coeffs / self.coeff_range["max"]
 
         poles = poles.reshape((batch_size, series_size, -1))
         coeffs = coeffs.reshape((batch_size, series_size, -1))
@@ -160,7 +165,7 @@ class LaplaceEncoder(NNBaseModel):
         # most time-series would not
         # - decay too fast ~ e^(-10t)
         # - increase too fast ~ e^(t)
-        re_min, re_max = self.pole_range['re']
+        re_min, re_max = self.pole_range["re"]
         poles_re = torch.clamp(poles_re, min=re_min, max=re_max)
         # poles_re = poles_re + (poles_re_clamp - poles_re).detach()
 
@@ -171,10 +176,11 @@ class LaplaceEncoder(NNBaseModel):
         constrained_poles = torch.stack([poles_re, poles_im], dim=-1)
         poles = torch.view_as_complex(constrained_poles)
 
-        coeffs = embed[:, :, poles_embed_size:poles_embed_size + coeffs_embed_size].reshape(
-            (batch_size, series_size, self.num_poles, self.max_degree, 2))
+        coeffs = embed[:, :, poles_embed_size : poles_embed_size + coeffs_embed_size].reshape(
+            (batch_size, series_size, self.num_poles, self.max_degree, 2)
+        )
 
-        multiplier = self.coeff_range['max']
+        multiplier = self.coeff_range["max"]
         coeffs = multiplier * torch.tanh(coeffs)
         coeffs = torch.view_as_complex(coeffs)
 
@@ -186,7 +192,8 @@ class LaplaceEncoder(NNBaseModel):
 
     def _sort_poles(self, poles, coeffs):
         idx = np.apply_along_axis(
-            lambda x: sort_complex(x, threshold=self.delta_pole), axis=-1, arr=poles.detach().cpu())
+            lambda x: sort_complex(x, threshold=self.delta_pole), axis=-1, arr=poles.detach().cpu()
+        )
         idx = torch.from_numpy(idx).to(self.device)
         poles = torch.take_along_dim(poles, idx, dim=-1)
         coeffs = torch.take_along_dim(coeffs, idx[..., np.newaxis], dim=-2)
@@ -209,7 +216,7 @@ class LaplaceEncoder(NNBaseModel):
         if self.window_size is not None:
             # dt: batch_size x series_size x window_size
             dt = self._unfold(dt)
-            dt[:, :, 0] = 0    # set initial delta t to zero
+            dt[:, :, 0] = 0  # set initial delta t to zero
             # f: batch_size x series_size x window_size
             f = self._unfold(f)
             ft = torch.stack([f, dt], dim=-1)
@@ -260,15 +267,15 @@ class LaplaceEncoder(NNBaseModel):
         return fs
 
     def forward(self, input):
-        f = input['f']
-        t = input['t']
+        f = input["f"]
+        t = input["t"]
 
         poles, coeffs = self._encode(f, t)
         f_rec = self._decode(poles, coeffs, t)
         out = {}
-        out['f_rec'] = f_rec
-        out['poles'] = poles
-        out['coeffs'] = coeffs
+        out["f_rec"] = f_rec
+        out["poles"] = poles
+        out["coeffs"] = coeffs
         return out
 
     def _rmse_f(self, f, f_rec):
@@ -303,8 +310,9 @@ class LaplaceEncoder(NNBaseModel):
         # evaluate the imaginary part of ILT[F(s)] at larger scale
         batch_size, series_size, _ = poles.shape
         # randomly scale time steps
-        t_scale = torch.linspace(0, 1, steps= series_size, device=self.device) \
-                + 0.5 / series_size * torch.randn((batch_size, series_size), device=self.device)
+        t_scale = torch.linspace(0, 1, steps=series_size, device=self.device) + 0.5 / series_size * torch.randn(
+            (batch_size, series_size), device=self.device
+        )
         t_scale = torch.clamp(t_scale, min=0, max=1)
         # f_rec: batch_size x series_size x series_size
         f_rec = self._decode(poles, coeffs, t_scale, windowed=False)
@@ -359,18 +367,18 @@ class LaplaceEncoder(NNBaseModel):
         return separation
 
     def expose_loss(self, f, t, mask):
-        data = {'f': f, 't': t, 'mask': mask}
+        data = {"f": f, "t": t, "mask": mask}
         losses = self._calculate_train_losses(data)
         return losses
 
     def _calculate_train_losses(self, batch):
         out = self.forward(batch)
 
-        f = batch['f']
-        mask = batch['mask']
-        f_rec = out['f_rec']
-        poles = out['poles']
-        coeffs = out['coeffs']
+        f = batch["f"]
+        mask = batch["mask"]
+        f_rec = out["f_rec"]
+        poles = out["poles"]
+        coeffs = out["coeffs"]
 
         # rmse: batch_size x series_size
         rmse = self._rmse_f(f, f_rec)
@@ -388,18 +396,18 @@ class LaplaceEncoder(NNBaseModel):
         real = torch.sum(real * mask) / (torch.sum(mask) + EPS)
 
         losses = {}
-        losses['rmse'] = rmse
-        losses['cont'] = contrast
-        losses['pole'] = separation
-        losses['real'] = real
+        losses["rmse"] = rmse
+        losses["cont"] = contrast
+        losses["pole"] = separation
+        losses["real"] = real
 
         return losses
 
     def _calculate_valid_losses(self, batch):
-        f = batch['f']
-        mask = batch['mask']
+        f = batch["f"]
+        mask = batch["mask"]
         out = self.forward(batch)
-        f_rec = out['f_rec']
+        f_rec = out["f_rec"]
         # poles = out['poles']
         # coeffs = out['coeffs']
 
@@ -408,5 +416,5 @@ class LaplaceEncoder(NNBaseModel):
         rmse = torch.sum(rmse * mask) / (torch.sum(mask) + EPS)
 
         losses = {}
-        losses['rmse'] = rmse
+        losses["rmse"] = rmse
         return losses

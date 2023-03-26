@@ -1,3 +1,3 @@
-from .model import LaplaceEncoder, Predictor, JointPredictor
+from .model import JointPredictor, LaplaceEncoder, Predictor
 
-__all__ = ['LaplaceEncoder', 'Predictor', 'JointPredictor']
+__all__ = ["LaplaceEncoder", "Predictor", "JointPredictor"]

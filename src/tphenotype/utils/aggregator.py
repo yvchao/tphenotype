@@ -1,5 +1,4 @@
 class MetricAggregator:
-
     def __init__(self):
         self.metrics = {}
         self.counts = {}

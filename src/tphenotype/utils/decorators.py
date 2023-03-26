@@ -1,21 +1,21 @@
-import torch
-import numpy as np
 from functools import wraps
+
+import numpy as np
+import torch
 
 EPS = 1e-10
 
 
 def device_init(init):
-
     @wraps(init)
     def decorate(self, *arg, **kwargs):
         init(self, *arg, **kwargs)
-        device = kwargs.get('device', None)
+        device = kwargs.get("device", None)
         if device is not None:
-            assert device in ['cpu', 'cuda']
+            assert device in ["cpu", "cuda"]
             self.device = device
         else:
-            self.device = 'cuda' if torch.cuda.is_available() else 'cpu'
+            self.device = "cuda" if torch.cuda.is_available() else "cpu"
         self.to(self.device)
 
     return decorate
@@ -47,7 +47,6 @@ def tensor_to_numpy(tensor):
 
 
 def numpy_io(io):
-
     @wraps(io)
     def decorate(self, *arg, **kwargs):
         arg = tuple_to(arg, numpy_to_tensor)
@@ -65,13 +64,12 @@ def numpy_io(io):
 
 
 def run_in_batch(fn, batch_size=1000):
-
     @wraps(fn)
     def decorate(self, *args):
         indices = torch.arange(len(args[0]), dtype=torch.long)
         xs = []
         for k in range(0, len(indices), batch_size):
-            idx = indices[k:k + batch_size]
+            idx = indices[k : k + batch_size]
             arg_k = tuple(a[idx] for a in args)
             x = fn(self, *arg_k)
             xs.append(x)

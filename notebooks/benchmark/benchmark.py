@@ -1,10 +1,10 @@
-import torch
-import pandas as pd
 import numpy as np
+import pandas as pd
+import torch
 from numpy.core.multiarray import interp
 from tqdm import auto
 
-from tphenotype.utils import get_auc_scores, get_cls_scores, select_by_steps, data_split
+from tphenotype.utils import data_split, get_auc_scores, get_cls_scores, select_by_steps
 
 
 def batch_interp(t, tp, fp):
@@ -23,11 +23,11 @@ def data_interpolation(t, x, samples=20):
 
 
 def evaluate(model, dataset, steps=[-1]):
-    x = dataset['x']
-    t = dataset['t']
-    c = dataset.get('c', None)
-    y = dataset['y']
-    mask = dataset['mask']
+    x = dataset["x"]
+    t = dataset["t"]
+    c = dataset.get("c", None)
+    y = dataset["y"]
+    mask = dataset["mask"]
 
     try:
         c_pred = model.predict_cluster(x, t, mask, steps)
@@ -55,7 +55,7 @@ def evaluate(model, dataset, steps=[-1]):
 
     if y_pred is not None:
         AUROC, AUPRC = get_auc_scores(y_true, y_pred)
-        auc_scores = {'ROC': np.mean(AUROC), 'PRC': np.mean(AUPRC)}
+        auc_scores = {"ROC": np.mean(AUROC), "PRC": np.mean(AUPRC)}
     else:
         auc_scores = {}
 
@@ -67,31 +67,31 @@ def evaluate(model, dataset, steps=[-1]):
     else:
         cls_scores = {}
 
-    mixed1 = 2 / (1 / auc_scores.get('ROC', 1e-10) + 1 / cls_scores.get('Silhouette_auc', 1e-10))
-    mixed2 = 2 / (1 / auc_scores.get('PRC', 1e-10) + 1 / cls_scores.get('Silhouette_auc', 1e-10))
-    scores = {'method': model.name, **auc_scores, **cls_scores, 'Hroc': mixed1, 'Hprc': mixed2}
+    mixed1 = 2 / (1 / auc_scores.get("ROC", 1e-10) + 1 / cls_scores.get("Silhouette_auc", 1e-10))
+    mixed2 = 2 / (1 / auc_scores.get("PRC", 1e-10) + 1 / cls_scores.get("Silhouette_auc", 1e-10))
+    scores = {"method": model.name, **auc_scores, **cls_scores, "Hroc": mixed1, "Hprc": mixed2}
     return scores
 
 
 def get_ci(series, decimals=3):
-    if series.dtype == 'object':
+    if series.dtype == "object":
         return series.iloc[0]
 
-    stats = series.agg(['mean', 'sem'])
-    mean = np.format_float_positional(stats['mean'], decimals)
-    ci = np.format_float_positional(1.96 * stats['sem'], decimals)
-    out = f'{mean}+-{ci}'
+    stats = series.agg(["mean", "sem"])
+    mean = np.format_float_positional(stats["mean"], decimals)
+    ci = np.format_float_positional(1.96 * stats["sem"], decimals)
+    out = f"{mean}+-{ci}"
     return out
 
 
 def benchmark_old(method, config, dataset, loss_weights, steps=[-1], epochs=50, n=3, seed=0):
-    dtype = 'float32'
+    dtype = "float32"
 
-    #train_set, valid_set, test_set = dataset
-    #N, T, _ = dataset['x'].shape
+    # train_set, valid_set, test_set = dataset
+    # N, T, _ = dataset['x'].shape
 
     results = []
-    for i in auto.tqdm(range(n), desc=f'{method.__name__}'):
+    for i in auto.tqdm(range(n), desc=f"{method.__name__}"):
         train_set, test_set = data_split(dataset, test_size=0.2, random_state=seed + i, dtype=dtype)
         train_set, valid_set = data_split(train_set, test_size=0.2, random_state=seed + i, dtype=dtype)
 
@@ -106,10 +106,10 @@ def benchmark_old(method, config, dataset, loss_weights, steps=[-1], epochs=50, 
 
 
 def benchmark(method, config, splits, loss_weights, steps=[-1], epochs=50, seed=0):
-    dtype = 'float32'
+    dtype = "float32"
 
     results = []
-    for i, dataset in auto.tqdm(enumerate(splits), total=len(splits), desc=f'{method.__name__}'):
+    for i, dataset in auto.tqdm(enumerate(splits), total=len(splits), desc=f"{method.__name__}"):
         train_set, valid_set, test_set = dataset
 
         torch.random.manual_seed(seed + i)
@@ -123,45 +123,45 @@ def benchmark(method, config, splits, loss_weights, steps=[-1], epochs=50, seed=
 
 
 KME2P_config = {
-    'K': None,
-    'x_dim': None,
-    'y_dim': None,
-    'latent_size': 10,
-    'hidden_size': 10,
-    'num_layers': 2,
-    'device': 'cpu',
+    "K": None,
+    "x_dim": None,
+    "y_dim": None,
+    "latent_size": 10,
+    "hidden_size": 10,
+    "num_layers": 2,
+    "device": "cpu",
 }
 
 Encoder_config = {
-    'num_poles': 4,    # number of poles
-    'max_degree': 1,    # maximum degree of poles
-    'hidden_size': 10,    # number of hidden units in neural networks
-    'num_layers': 1,    # number of layers in MLP of the encoder (1 layer RNN + n layer MLP)
-    'pole_separation': 1.0,    # minimum distance between distinct poles 
-    'freq_scaler': 20,    # scale up the imaginary part to help learning
-    'window_size': None,    # whether or not to include time delay terms
-    'equivariant_embed': True,    # whether or not to sort the poles (useless during training)
-    'device': 'cpu',
+    "num_poles": 4,  # number of poles
+    "max_degree": 1,  # maximum degree of poles
+    "hidden_size": 10,  # number of hidden units in neural networks
+    "num_layers": 1,  # number of layers in MLP of the encoder (1 layer RNN + n layer MLP)
+    "pole_separation": 1.0,  # minimum distance between distinct poles
+    "freq_scaler": 20,  # scale up the imaginary part to help learning
+    "window_size": None,  # whether or not to include time delay terms
+    "equivariant_embed": True,  # whether or not to sort the poles (useless during training)
+    "device": "cpu",
 }
 
 Cls_config = {
-    'K': None,
-    'steps': [-1],
-    'tol': 1e-6,
-    'test_num': 50,
+    "K": None,
+    "steps": [-1],
+    "tol": 1e-6,
+    "test_num": 50,
 }
 
 Predictor_config = {
-    'x_dim': None,
-    'y_dim': None,
-    'time_series_dims': None,
-    'hidden_size': 10,
-    'num_layer': 3,
-    'global_bias': False,
-    'encoder_config': None,
-    'cls_config': None,
-    'categorical': True,
-    'device': 'cpu',
+    "x_dim": None,
+    "y_dim": None,
+    "time_series_dims": None,
+    "hidden_size": 10,
+    "num_layer": 3,
+    "global_bias": False,
+    "encoder_config": None,
+    "cls_config": None,
+    "categorical": True,
+    "device": "cpu",
 }
 
-loss_weights = {'ce': 1.0, 'rmse': 1.0, 'cont': 0.01, 'pole': 1.0, 'real': 0.1}
+loss_weights = {"ce": 1.0, "rmse": 1.0, "cont": 0.01, "pole": 1.0, "real": 0.1}

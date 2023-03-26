@@ -1,4 +1,5 @@
 import numpy as np
+
 from ..utils.utils import batch_d
 
 
@@ -41,7 +42,7 @@ def initialize_centers(S, K):
             continue
         delta_J = np.zeros((K,))
         for k in range(K):
-            idx, = np.where(cluster_assignment == k)
+            (idx,) = np.where(cluster_assignment == k)
             delta_J = 2 * np.sum(S[i, idx])
         cluster_assignment[i] = np.argmin(delta_J)
 
@@ -49,7 +50,6 @@ def initialize_centers(S, K):
 
 
 class GraphKmeans:
-
     def __init__(self, K, S, Q):
         N, y_dim = Q.shape
         self.K = K
@@ -63,7 +63,7 @@ class GraphKmeans:
     def _init_clusters(self):
         delta = 0.0
         for k in range(self.K):
-            idx, = np.where(self.cluster_assignment == k)
+            (idx,) = np.where(self.cluster_assignment == k)
             probs_k = self.Q[idx]
             # update cluster centroid
             self.cluster_centroids[k] = np.mean(probs_k, axis=0)
@@ -79,8 +79,8 @@ class GraphKmeans:
         # update delta
         self.delta = min(self.delta, 2 * delta)
 
-        self.idx_assigned, = np.where(self.cluster_assignment != -1)
-        self.idx_free, = np.where(self.cluster_assignment == -1)
+        (self.idx_assigned,) = np.where(self.cluster_assignment != -1)
+        (self.idx_free,) = np.where(self.cluster_assignment == -1)
 
     def fit(self, max_iter=1000, tol=1e-7, patience=5):
         best_loss = np.inf
@@ -121,14 +121,14 @@ class GraphKmeans:
 
         self.cluster_assignment = best_clusters
         self.cluster_centroids = best_centroids
-        self.idx_assigned, = np.where(self.cluster_assignment != -1)
-        self.idx_free, = np.where(self.cluster_assignment == -1)
+        (self.idx_assigned,) = np.where(self.cluster_assignment != -1)
+        (self.idx_free,) = np.where(self.cluster_assignment == -1)
 
         return self
 
     def _get_candidates(self, G):
         reachable = np.any(G[self.idx_assigned][:, self.idx_free], axis=0)
-        idx_candidates, = np.where(reachable)
+        (idx_candidates,) = np.where(reachable)
         return self.idx_free[idx_candidates]
 
     def _get_reachable_clusters(self, G, candidates):
@@ -142,18 +142,18 @@ class GraphKmeans:
             p_clusters = self.cluster_centroids[reachable]
             dist = d_js(p, p_clusters)[0]
             self.cluster_assignment[node] = reachable[np.argmin(dist)]
-        self.idx_assigned, = np.where(self.cluster_assignment != -1)
-        self.idx_free, = np.where(self.cluster_assignment == -1)
+        (self.idx_assigned,) = np.where(self.cluster_assignment != -1)
+        (self.idx_free,) = np.where(self.cluster_assignment == -1)
 
     def _update_centroids(self):
         for i in range(self.K):
-            cluster_i, = np.where(self.cluster_assignment == i)
+            (cluster_i,) = np.where(self.cluster_assignment == i)
             self.cluster_centroids[i] = np.mean(self.Q[cluster_i], axis=0)
 
     def _calculate_loss(self):
         loss = 0
         for i in range(self.K):
-            cluster_i, = np.where(self.cluster_assignment == i)
+            (cluster_i,) = np.where(self.cluster_assignment == i)
             P = self.Q[cluster_i]
             P_c = self.cluster_centroids[i]
             dist = d_js(P, P_c)[:, 0]
@@ -161,9 +161,9 @@ class GraphKmeans:
         return loss
 
     def get_cluster(self, k):
-        cluster_k, = np.where(self.cluster_assignment == k)
+        (cluster_k,) = np.where(self.cluster_assignment == k)
         p = self.cluster_centroids[k]
-        return {'samples': cluster_k, 'p': p}
+        return {"samples": cluster_k, "p": p}
 
     def get_outliers(self):
         return self.idx_free

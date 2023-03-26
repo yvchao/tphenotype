@@ -1,9 +1,10 @@
-import numpy as np
 import pickle
+
+import numpy as np
 from dtaidistance.dtw import dtw_cc
-from pyclustering.cluster.kmeans import kmeans
-from pyclustering.utils.metric import type_metric, distance_metric
 from pyclustering.cluster.center_initializer import kmeans_plusplus_initializer
+from pyclustering.cluster.kmeans import kmeans
+from pyclustering.utils.metric import distance_metric, type_metric
 
 from ..base_model import BaseModel
 
@@ -19,7 +20,7 @@ def slice_sub_sequences(x, mask=None):
     x = x.reshape((sample_size, 1, series_size, x_dim))
     x = np.repeat(x, series_size, axis=1)
     for t in range(series_size):
-        x[:, t, -(t + 1):, :] = x[:, t, :t + 1, :]
+        x[:, t, -(t + 1) :, :] = x[:, t, : t + 1, :]
         x[:, t, :t, :] = 0
     if mask is not None:
         x = x[mask[:, :] == 1.0]
@@ -29,16 +30,15 @@ def slice_sub_sequences(x, mask=None):
 
 
 class KMDTW(BaseModel):
-
     def __init__(self, K, **kwargs):
         super().__init__()
-        self.name = 'KM-DTW-D'
+        self.name = "KM-DTW-D"
         self.K = K
 
     def fit(self, train_set, *args, **kwargs):
-        x = train_set['x']
-        y = train_set['y']
-        mask = train_set['mask']
+        x = train_set["x"]
+        y = train_set["y"]
+        mask = train_set["mask"]
         x = slice_sub_sequences(x, mask)
         sample_size, series_size, x_dim = x.shape
         x = x.reshape((sample_size, -1))
@@ -66,7 +66,7 @@ class KMDTW(BaseModel):
             self.cluster_y[i] = np.mean(y[c], axis=0)
         return self
 
-    def save(self, path='.', name=None):
+    def save(self, path=".", name=None):
         pass
 
     def load(self, filename):

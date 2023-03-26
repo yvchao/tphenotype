@@ -10,7 +10,7 @@ def slice_sub_sequences(x, mask=None):
     x = x.reshape((sample_size, 1, series_size, x_dim))
     x = np.repeat(x, series_size, axis=1)
     for t in range(series_size):
-        x[:, t, -(t + 1):, :] = x[:, t, :t + 1, :]
+        x[:, t, -(t + 1) :, :] = x[:, t, : t + 1, :]
         x[:, t, :t, :] = 0
     if mask is not None:
         x = x[mask[:, :] == 1.0]
@@ -20,17 +20,16 @@ def slice_sub_sequences(x, mask=None):
 
 
 class SpectralDTW(BaseModel):
-
     def __init__(self, K, sigma, **kwargs):
         super().__init__()
-        self.name = 'Spectral-DTW-D'
+        self.name = "Spectral-DTW-D"
         self.K = K
         self.sigma = sigma
 
     def fit(self, train_set, *args, **kwargs):
-        x = train_set['x']
-        y = train_set['y']
-        mask = train_set['mask']
+        x = train_set["x"]
+        y = train_set["y"]
+        mask = train_set["mask"]
         self.corpus_x = slice_sub_sequences(x, mask)
         self.corpus_y = y[mask[:, :] == 1.0]
         self.corpus_size = len(self.corpus_x)
@@ -41,12 +40,12 @@ class SpectralDTW(BaseModel):
         x = slice_sub_sequences(x, mask)
         x_concat = np.concatenate([self.corpus_x, x], axis=0)
         distance = dtw_ndim.distance_matrix_fast(x_concat.astype(np.double), ndim=x_dim)
-        W = np.exp(-distance**2 / self.sigma)
+        W = np.exp(-(distance**2) / self.sigma)
 
-        self.cls = SpectralClustering(n_clusters=self.K, random_state=0, affinity='precomputed')
+        self.cls = SpectralClustering(n_clusters=self.K, random_state=0, affinity="precomputed")
         c_pred = self.cls.fit_predict(W)
-        cluster_labels = c_pred[:self.corpus_size]
-        cluster_pred = c_pred[self.corpus_size:]
+        cluster_labels = c_pred[: self.corpus_size]
+        cluster_pred = c_pred[self.corpus_size :]
         clusters = np.unique(cluster_labels)
 
         _, y_dim = self.corpus_y.shape
@@ -62,7 +61,7 @@ class SpectralDTW(BaseModel):
         labels = self.cluster_y[cluster]
         return labels
 
-    def save(self, path='.', name=None):
+    def save(self, path=".", name=None):
         pass
 
     def load(self, filename):

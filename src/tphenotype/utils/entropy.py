@@ -1,18 +1,18 @@
 # https://github.com/yuxi120407/DIB/blob/main/utils.py
 
-import torch
 import numpy as np
+import torch
 
 
 def pairwise_distances(x):
-    #x should be two dimensional
+    # x should be two dimensional
     instances_norm = torch.sum(x**2, -1).reshape((-1, 1))
     return -2 * torch.mm(x, x.t()) + instances_norm + instances_norm.t()
 
 
 def calculate_gram_mat(x, sigma):
     dist = pairwise_distances(x)
-    #dist = dist/torch.max(dist)
+    # dist = dist/torch.max(dist)
     return torch.exp(-dist / sigma)
 
 
@@ -22,7 +22,7 @@ def reyi_entropy(x, sigma):
     k = k / torch.trace(k)
     L, Q = torch.torch.linalg.eigh(k)
     eigv = torch.abs(L)
-    #eigv = torch.abs(torch.symeig(k, eigenvectors=True)[0])
+    # eigv = torch.abs(torch.symeig(k, eigenvectors=True)[0])
     eig_pow = eigv**alpha
     entropy = (1 / (1 - alpha)) * torch.log2(torch.sum(eig_pow))
     return entropy
@@ -36,7 +36,7 @@ def joint_entropy(x, y, s_x, s_y):
     k = k / torch.trace(k)
     L, Q = torch.torch.linalg.eigh(k)
     eigv = torch.abs(L)
-    #eigv = torch.abs(torch.symeig(k, eigenvectors=True)[0])
+    # eigv = torch.abs(torch.symeig(k, eigenvectors=True)[0])
     eig_pow = eigv**alpha
     entropy = (1 / (1 - alpha)) * torch.log2(torch.sum(eig_pow))
 
@@ -44,11 +44,10 @@ def joint_entropy(x, y, s_x, s_y):
 
 
 def calculate_MI(x, y, s_x, s_y):
-
     Hx = reyi_entropy(x, sigma=s_x)
     Hy = reyi_entropy(y, sigma=s_y)
     Hxy = joint_entropy(x, y, s_x, s_y)
     Ixy = Hx + Hy - Hxy
-    #normlize = Ixy/(torch.max(Hx,Hy))
+    # normlize = Ixy/(torch.max(Hx,Hy))
 
     return Ixy

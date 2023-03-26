@@ -1,13 +1,13 @@
 from .e2p import E2P
-from .kme2p import KME2P
 from .kmdtw import KMDTW
-from .spectrale2p import SpectralDTW
+from .kme2p import KME2P
 from .kmlaplace import KMLaplace
+from .spectrale2p import SpectralDTW
 
 __all__ = [
-    'E2P',
-    'KME2P',
-    'KMDTW',
-    'SpectralDTW',
-    'KMLaplace',
+    "E2P",
+    "KME2P",
+    "KMDTW",
+    "SpectralDTW",
+    "KMLaplace",
 ]

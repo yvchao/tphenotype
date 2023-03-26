@@ -1,45 +1,48 @@
+import copy
+import os
+import random
+import sys
+
+import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
-import matplotlib.pyplot as plt
 
-import copy
-import random
-import os, sys
-
-fd = os.open('/dev/null', os.O_WRONLY)
+fd = os.open("/dev/null", os.O_WRONLY)
 os.dup2(fd, 2)
-
-import tensorflow as tf
-
-from pandas.api.types import is_string_dtype
-from pandas.api.types import is_numeric_dtype
-
-from tensorflow.python.ops.rnn import _transpose_batch_time
-from sklearn.model_selection import train_test_split
-
-#performance metrics
-from sklearn.cluster import MiniBatchKMeans, KMeans
-from sklearn.metrics import roc_auc_score, average_precision_score
-from sklearn.metrics import normalized_mutual_info_score, homogeneity_score, adjusted_rand_score
-from sklearn.metrics.cluster import contingency_matrix
-
-#user defined
-import utils_network as utils
-from class_model_v7 import DeepTPC_ICLR
 
 # In[2]:
 import argparse
+
 import pickle5 as pickle
+import tensorflow as tf
+
+# user defined
+import utils_network as utils
+from class_model_v7 import DeepTPC_ICLR
+from pandas.api.types import is_numeric_dtype, is_string_dtype
+
+# performance metrics
+from sklearn.cluster import KMeans, MiniBatchKMeans
+from sklearn.metrics import (
+    adjusted_rand_score,
+    average_precision_score,
+    homogeneity_score,
+    normalized_mutual_info_score,
+    roc_auc_score,
+)
+from sklearn.metrics.cluster import contingency_matrix
+from sklearn.model_selection import train_test_split
+from tensorflow.python.ops.rnn import _transpose_batch_time
 
 
 ### PARAMETER LOGGING
 def save_logging(dictionary, log_name):
-    with open(log_name, 'w') as f:
+    with open(log_name, "w") as f:
         for key, value in dictionary.items():
-            if 'activate_fn' in key:
-                value = str(value).split(' ')[1]
+            if "activate_fn" in key:
+                value = str(value).split(" ")[1]
 
-            f.write('%s:%s\n' % (key, value))
+            f.write("%s:%s\n" % (key, value))
 
 
 def load_logging(filename):
@@ -54,30 +57,30 @@ def load_logging(filename):
             return True
 
         for line in f.readlines():
-            if ':' in line:
-                key, value = line.strip().split(':', 1)
+            if ":" in line:
+                key, value = line.strip().split(":", 1)
 
-                if 'activate_fn' in key:
-                    if value == 'relu':
+                if "activate_fn" in key:
+                    if value == "relu":
                         value = tf.nn.relu
-                    elif value == 'elu':
+                    elif value == "elu":
                         value = tf.nn.elu
-                    elif value == 'tanh':
+                    elif value == "tanh":
                         value = tf.nn.tanh
                     else:
-                        raise ValueError('ERROR: wrong choice of activation function!')
+                        raise ValueError("ERROR: wrong choice of activation function!")
                     data[key] = value
                 else:
                     if value.isdigit():
                         data[key] = int(value)
                     elif is_float(value):
                         data[key] = float(value)
-                    elif value == 'None':
+                    elif value == "None":
                         data[key] = None
                     else:
                         data[key] = value
             else:
-                pass    # deal with bad lines of text here
+                pass  # deal with bad lines of text here
     return data
 
 
@@ -111,9 +114,9 @@ def f_get_minibatch(mb_size, x, y):
 
 ### PERFORMANCE METRICS:
 def f_get_prediction_scores(y_true_, y_pred_):
-    if np.sum(y_true_) == 0:    #no label for running roc_auc_curves
-        auroc_ = -1.
-        auprc_ = -1.
+    if np.sum(y_true_) == 0:  # no label for running roc_auc_curves
+        auroc_ = -1.0
+        auprc_ = -1.0
     else:
         auroc_ = roc_auc_score(y_true_, y_pred_)
         auprc_ = average_precision_score(y_true_, y_pred_)
@@ -129,23 +132,23 @@ def purity_score(y_true, y_pred):
 
 def data_to_stats(x):
     if is_numeric_dtype(x):
-        return f'{np.mean(x):.2f}±{np.std(x):.2f}'
+        return f"{np.mean(x):.2f}±{np.std(x):.2f}"
     else:
         return x[0]
 
 
 def set_random_seed(seed):
-    os.environ['PYTHONHASHSEED'] = str(seed)
+    os.environ["PYTHONHASHSEED"] = str(seed)
     random.seed(seed)
     np.random.seed(seed)
     tf.set_random_seed(seed)
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     parser = argparse.ArgumentParser()
-    parser.add_argument('-k', '--cluster-number', default=4, type=int)
-    parser.add_argument('-d', '--data', default='ADNI', type=str)
-    parser.add_argument('--seed', default=1234, type=int)
+    parser.add_argument("-k", "--cluster-number", default=4, type=int)
+    parser.add_argument("-d", "--data", default="ADNI", type=str)
+    parser.add_argument("--seed", default=1234, type=int)
     args = parser.parse_args()
 
     K = args.cluster_number
@@ -153,14 +156,14 @@ if __name__ == '__main__':
 
     data_mode = data
 
-    with open(f'../../data/{data}_data.pkl', 'rb') as file:
+    with open(f"../../data/{data}_data.pkl", "rb") as file:
         splits = pickle.load(file)
 
-    x_dim = np.shape(splits[0][0]['x'])[2] + 1    # plus 1 because of delta t
-    y_dim = np.shape(splits[0][0]['y'])[2]
+    x_dim = np.shape(splits[0][0]["x"])[2] + 1  # plus 1 because of delta t
+    y_dim = np.shape(splits[0][0]["y"])[2]
 
-    max_length = np.shape(splits[0][0]['x'])[1]
-    y_type = 'categorical'
+    max_length = np.shape(splits[0][0]["x"])[1]
+    y_type = "categorical"
 
     OUT_ITERATION = len(splits)
 
@@ -183,27 +186,27 @@ if __name__ == '__main__':
         dataset = copy.deepcopy(dataset)
 
         for subset in dataset:
-            x = subset['x']
-            t = subset['t']
-            m = subset['range_mask']
+            x = subset["x"]
+            t = subset["t"]
+            m = subset["range_mask"]
             delta_t = np.zeros((*t.shape, 1))
             delta_t[:, 1:, 0] = t[:, 1:] - t[:, :-1]
             delta_t[m == 0] = 0
             x = np.concatenate([delta_t, x], axis=-1)
-            subset['x'] = x
+            subset["x"] = x
 
         train_set, valid_set, test_set = dataset
 
-        tr_data_x, tr_data_y = train_set['x'], train_set['y']
-        va_data_x, va_data_y = valid_set['x'], valid_set['y']
-        te_data_x, te_data_y = test_set['x'], test_set['y']
+        tr_data_x, tr_data_y = train_set["x"], train_set["y"]
+        va_data_x, va_data_y = valid_set["x"], valid_set["y"]
+        te_data_x, te_data_y = test_set["x"], test_set["y"]
 
         # for out_itr in [4]:
         print("======= K: {}   OUT_ITERATION: {} ======".format(K, out_itr))
 
-        load_path = './{}/proposed/K{}/itr{}/'.format(data_mode, K, out_itr)
+        load_path = "./{}/proposed/K{}/itr{}/".format(data_mode, K, out_itr)
 
-        input_dims = {'x_dim': x_dim, 'y_dim': y_dim, 'y_type': y_type, 'max_cluster': K, 'max_length': max_length}
+        input_dims = {"x_dim": x_dim, "y_dim": y_dim, "y_type": y_type, "max_cluster": K, "max_length": max_length}
 
         tf.reset_default_graph()
 
@@ -213,22 +216,22 @@ if __name__ == '__main__':
         set_random_seed(seed)
         sess = tf.Session(config=config)
 
-        network_settings = load_logging(load_path + 'models/network_settings_v7_K{}.txt'.format(K))
-        z_dim = network_settings['num_layers_encoder'] * network_settings['h_dim_encoder']
+        network_settings = load_logging(load_path + "models/network_settings_v7_K{}.txt".format(K))
+        z_dim = network_settings["num_layers_encoder"] * network_settings["h_dim_encoder"]
 
         model = DeepTPC_ICLR(sess, "Deep_TPC", input_dims, network_settings)
 
         saver = tf.train.Saver()
 
-        saver.restore(sess, load_path + 'models/model_v7_K{}_clustered'.format(K))
+        saver.restore(sess, load_path + "models/model_v7_K{}_clustered".format(K))
 
         model_output = {}
 
-        model_output['method'] = 'AC-TPC'
+        model_output["method"] = "AC-TPC"
 
         # cluster-based label prediction
         tmp_y, tmp_m = model.predict_y_bars(te_data_x)
-        model_output['y_pred'] = tmp_y
+        model_output["y_pred"] = tmp_y
 
         y_pred = tmp_y.reshape([-1, y_dim])[tmp_m.reshape([-1]) == 1]
         y_true = te_data_y.reshape([-1, y_dim])[tmp_m.reshape([-1]) == 1]
@@ -244,14 +247,14 @@ if __name__ == '__main__':
         RESULT_AUPRC[out_itr, :] = AUPRC
 
         # predictor
-        #tmp_y, tmp_m = model.predict_y_hats(te_data_x)
+        # tmp_y, tmp_m = model.predict_y_hats(te_data_x)
 
-        #y_pred = tmp_y.reshape([-1, y_dim])[tmp_m.reshape([-1]) == 1]
-        #y_true = te_data_y.reshape([-1, y_dim])[tmp_m.reshape([-1]) == 1]
+        # y_pred = tmp_y.reshape([-1, y_dim])[tmp_m.reshape([-1]) == 1]
+        # y_true = te_data_y.reshape([-1, y_dim])[tmp_m.reshape([-1]) == 1]
 
-        #AUROC = np.zeros([y_dim])
-        #AUPRC = np.zeros([y_dim])
-        #for y_idx in range(y_dim):
+        # AUROC = np.zeros([y_dim])
+        # AUPRC = np.zeros([y_dim])
+        # for y_idx in range(y_dim):
         #    auroc, auprc = f_get_prediction_scores(y_true[:, y_idx], y_pred[:, y_idx])
         #    AUROC[y_idx] = auroc
         #    AUPRC[y_idx] = auprc
@@ -259,7 +262,7 @@ if __name__ == '__main__':
         # In[31]:
         # cluster label
         pred_y, tmp_m = model.predict_s_sample(te_data_x)
-        model_output['c_pred'] = pred_y
+        model_output["c_pred"] = pred_y
 
         pred_y = (pred_y * tmp_m).reshape([-1, 1])
         pred_y = pred_y[(tmp_m.reshape([-1, 1]) == 1)[:, 0], 0]
@@ -277,12 +280,12 @@ if __name__ == '__main__':
         RESULT_PURITY[out_itr, 0] = tmp_purity
 
         df = pd.DataFrame()
-        df.loc[0, 'Model'] = 'AC-TPC'
-        df.loc[0, 'Purity'] = RESULT_PURITY[out_itr, 0]
-        df.loc[0, 'NMI'] = RESULT_NMI[out_itr, 0]
-        df.loc[0, 'ARI'] = RESULT_RI[out_itr, 0]
-        df.loc[0, 'AUROC'] = np.mean(RESULT_AUROC[out_itr, :])
-        df.loc[0, 'AUPRC'] = np.mean(RESULT_AUPRC[out_itr, :])
+        df.loc[0, "Model"] = "AC-TPC"
+        df.loc[0, "Purity"] = RESULT_PURITY[out_itr, 0]
+        df.loc[0, "NMI"] = RESULT_NMI[out_itr, 0]
+        df.loc[0, "ARI"] = RESULT_RI[out_itr, 0]
+        df.loc[0, "AUROC"] = np.mean(RESULT_AUROC[out_itr, :])
+        df.loc[0, "AUPRC"] = np.mean(RESULT_AUPRC[out_itr, :])
         dfs.append(df)
 
         model_preds.append(model_output)
@@ -293,9 +296,9 @@ if __name__ == '__main__':
     # In[22]:
     print(summary)
 
-    output_dir = 'output'
+    output_dir = "output"
     os.makedirs(output_dir, exist_ok=True)
-    with open(f'./{output_dir}/{data}_preds.pkl', 'wb') as file:
+    with open(f"./{output_dir}/{data}_preds.pkl", "wb") as file:
         pickle.dump(model_preds, file, pickle.HIGHEST_PROTOCOL)
 
-    print(f'model prediction saved to output/{data}_preds.pkl')
+    print(f"model prediction saved to output/{data}_preds.pkl")
