@@ -117,7 +117,7 @@ class Predictor(NNBaseModel):
 
         for i, d in enumerate(self.time_series_dims):
             x_d = x[:, :, d]
-            # normalize the embedding to aovid saturation
+            # normalize the embedding to avoid saturation
             x_d_embed = self.encoders[i]._get_embed(x_d, t, normalize=True)
             x_rep.append(x_d_embed)
         x_rep = torch.cat(x_rep, dim=-1)

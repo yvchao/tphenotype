@@ -76,7 +76,7 @@ def get_cls_scores_from_label(c_true, c_pred):
     return scores
 
 
-# 2. without gronud truth
+# 2. without ground truth
 def get_cls_scores_without_label(x, c_pred, y_true):
     scores = {}
     # eval = evaluate_MI(x, c_pred, y_true)
