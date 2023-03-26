@@ -15,8 +15,8 @@ python hs_K_orig.py
 
 echo "hparams selection for baselines"
 echo "E2Py"
-python hs_e2py.py 
+python hs_e2py.py
 echo "E2Pz"
-python hs_e2pz.py 
+python hs_e2pz.py
 echo "Spectral"
-python hs_spectral.py 
+python hs_spectral.py

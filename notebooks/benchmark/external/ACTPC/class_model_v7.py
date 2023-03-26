@@ -94,7 +94,8 @@ class DeepTPC_ICLR:
                 tf.equal(tmp_range, tf.expand_dims(seq_length - 1, axis=1)), tf.float32
             )  # last observation
             self.rnn_mask2 = tf.cast(
-                tf.less_equal(tmp_range, tf.expand_dims(seq_length - 1, axis=1)), tf.float32
+                tf.less_equal(tmp_range, tf.expand_dims(seq_length - 1, axis=1)),
+                tf.float32,
             )  # all available observation
             # Only consider last available observation
             self.rnn_mask2 = self.rnn_mask1
@@ -112,7 +113,10 @@ class DeepTPC_ICLR:
                 with tf.variable_scope("selector", reuse=reuse):
                     if num_layers_ == 1:
                         out = tf.contrib.layers.fully_connected(
-                            inputs=x_, num_outputs=o_dim_, activation_fn=out_fn, scope="selector_out"
+                            inputs=x_,
+                            num_outputs=o_dim_,
+                            activation_fn=out_fn,
+                            scope="selector_out",
                         )
                     else:  # num_layers > 1
                         for tmp_layer in range(num_layers_ - 1):
@@ -126,7 +130,10 @@ class DeepTPC_ICLR:
                             )
                             net = tf.nn.dropout(net, keep_prob=self.keep_prob)
                         out = tf.contrib.layers.fully_connected(
-                            inputs=net, num_outputs=o_dim_, activation_fn=out_fn, scope="selector_out"
+                            inputs=net,
+                            num_outputs=o_dim_,
+                            activation_fn=out_fn,
+                            scope="selector_out",
                         )
                 return out
 
@@ -152,7 +159,10 @@ class DeepTPC_ICLR:
                 with tf.variable_scope("predictor", reuse=reuse):
                     if num_layers_ == 1:
                         out = tf.contrib.layers.fully_connected(
-                            inputs=x_, num_outputs=o_dim_, activation_fn=out_fn, scope="predictor_out"
+                            inputs=x_,
+                            num_outputs=o_dim_,
+                            activation_fn=out_fn,
+                            scope="predictor_out",
                         )
                     else:  # num_layers > 1
                         for tmp_layer in range(num_layers_ - 1):
@@ -166,7 +176,10 @@ class DeepTPC_ICLR:
                             )
                             net = tf.nn.dropout(net, keep_prob=self.keep_prob)
                         out = tf.contrib.layers.fully_connected(
-                            inputs=net, num_outputs=o_dim_, activation_fn=out_fn, scope="predictor_out"
+                            inputs=net,
+                            num_outputs=o_dim_,
+                            activation_fn=out_fn,
+                            scope="predictor_out",
                         )
                 return out
 
@@ -181,9 +194,20 @@ class DeepTPC_ICLR:
                     next_cell_state = cell_state
                     tmp_z = utils.create_concat_state_h(next_cell_state, self.num_layers_f, self.rnn_type)
                     tmp_y = predictor(
-                        tmp_z, self.y_dim, self.y_type, self.num_layers_g, self.h_dim_g, self.fc_activate_fn
+                        tmp_z,
+                        self.y_dim,
+                        self.y_type,
+                        self.num_layers_g,
+                        self.h_dim_g,
+                        self.fc_activate_fn,
                     )
-                    tmp_pi = selector(tmp_z, self.K, self.num_layers_h, self.h_dim_h, self.fc_activate_fn)
+                    tmp_pi = selector(
+                        tmp_z,
+                        self.K,
+                        self.num_layers_h,
+                        self.h_dim_h,
+                        self.fc_activate_fn,
+                    )
 
                     next_loop_state = (
                         loop_state[0].write(time - 1, tmp_z),  # save all the hidden states
@@ -200,12 +224,18 @@ class DeepTPC_ICLR:
                     lambda: tf.zeros([self.mb_size, self.x_dim], dtype=tf.float32),
                     lambda: inputs_ta.read(time),
                 )
-                return (elements_finished, next_input, next_cell_state, emit_output, next_loop_state)
+                return (
+                    elements_finished,
+                    next_input,
+                    next_cell_state,
+                    emit_output,
+                    next_loop_state,
+                )
 
             """
                 ##### CREATE RNN NETWORK
                     - (INPUT)  inputs_ta: TensorArray with [max_length, mb_size, x_dim] #x_dim included delta
-                    - (OUTPUT) 
+                    - (OUTPUT)
                         . zs     = rnn states (h) in LSTM/GRU             ; [mb_size, max_length z_dim]
                         . y_hats = output of predictor taking zs as inputs; [mb_size, max_length, y_dim]
                         . pis    = output of selector                     ; [mb_size, max_length, K]
@@ -217,7 +247,11 @@ class DeepTPC_ICLR:
             )
 
             cell = utils.create_rnn_cell(
-                self.h_dim_f, self.num_layers_f, self.keep_prob, self.rnn_type, self.rnn_activate_fn
+                self.h_dim_f,
+                self.num_layers_f,
+                self.keep_prob,
+                self.rnn_type,
+                self.rnn_activate_fn,
             )
 
             # define the loop_state TensorArray for information from rnn time steps
@@ -240,7 +274,11 @@ class DeepTPC_ICLR:
             s_sample = s_dist.sample()
 
             mask_e = tf.cast(
-                tf.equal(tf.expand_dims(tf.range(0, self.K, 1), axis=0), tf.expand_dims(s_sample, axis=1)), tf.float32
+                tf.equal(
+                    tf.expand_dims(tf.range(0, self.K, 1), axis=0),
+                    tf.expand_dims(s_sample, axis=1),
+                ),
+                tf.float32,
             )
             z_bars = tf.matmul(mask_e, self.EE)
 
@@ -248,7 +286,12 @@ class DeepTPC_ICLR:
 
             with tf.variable_scope("rnn", reuse=True):
                 y_bars = predictor(
-                    z_bars, self.y_dim, self.y_type, self.num_layers_g, self.h_dim_g, self.fc_activate_fn
+                    z_bars,
+                    self.y_dim,
+                    self.y_type,
+                    self.num_layers_g,
+                    self.h_dim_g,
+                    self.fc_activate_fn,
                 )
 
             self.z_bars = tf.reshape(z_bars, [-1, self.max_length, self.z_dim])
@@ -264,7 +307,10 @@ class DeepTPC_ICLR:
                 elif y_type_ == "categorical":
                     tmp_loss = -tf.reduce_sum(y_true_ * log(y_pred_), axis=-1)
                 elif y_type_ == "binary":
-                    tmp_loss = -tf.reduce_sum(y_true_ * log(y_pred_) + (1.0 - y_true_) * log(1.0 - y_pred_), axis=-1)
+                    tmp_loss = -tf.reduce_sum(
+                        y_true_ * log(y_pred_) + (1.0 - y_true_) * log(1.0 - y_pred_),
+                        axis=-1,
+                    )
                 else:
                     raise Exception("Wrong output type. The value {}!!".format(y_type_))
                 return tmp_loss
@@ -280,7 +326,10 @@ class DeepTPC_ICLR:
                 tf.reduce_sum(self.rnn_mask2 * loss_1(self.y, self.y_bars, self.y_type), axis=1)
             )
             self.LOSS_1_AC = tf.reduce_mean(
-                tf.reduce_sum(self.rnn_mask2 * self.pi_sample * loss_1(self.y, self.y_bars, self.y_type), axis=1)
+                tf.reduce_sum(
+                    self.rnn_mask2 * self.pi_sample * loss_1(self.y, self.y_bars, self.y_type),
+                    axis=1,
+                )
             )
 
             ## LOSS2: prediction loss
@@ -290,7 +339,10 @@ class DeepTPC_ICLR:
 
             ## LOSS3: sample-wise entropy
             self.LOSS_3 = tf.reduce_mean(
-                -tf.reduce_sum(self.rnn_mask2 * tf.reduce_sum(self.pis * log(self.pis), axis=2), axis=1)
+                -tf.reduce_sum(
+                    self.rnn_mask2 * tf.reduce_sum(self.pis * log(self.pis), axis=2),
+                    axis=1,
+                )
             )
 
             ## LOSS4: average-wise entropy
@@ -307,7 +359,14 @@ class DeepTPC_ICLR:
 
             ### EMBEDDING TRAINING
             with tf.variable_scope("rnn", reuse=True):
-                Ey = predictor(self.EE, self.y_dim, self.y_type, self.num_layers_g, self.h_dim_g, self.fc_activate_fn)
+                Ey = predictor(
+                    self.EE,
+                    self.y_dim,
+                    self.y_type,
+                    self.num_layers_g,
+                    self.h_dim_g,
+                    self.fc_activate_fn,
+                )
 
             ## LOSS_Ey: prevent embedding from collapsing
             self.LOSS_Ey = 0
@@ -322,7 +381,8 @@ class DeepTPC_ICLR:
                 self.LOSS_2, var_list=encoder_vars + predictor_vars
             )
             self.solver_L1_critic = tf.train.AdamOptimizer(self.lr_rate1).minimize(
-                self.LOSS_1 + self.beta * self.LOSS_2, var_list=encoder_vars + predictor_vars
+                self.LOSS_1 + self.beta * self.LOSS_2,
+                var_list=encoder_vars + predictor_vars,
             )
             self.solver_L1_actor = tf.train.AdamOptimizer(self.lr_rate2).minimize(
                 self.LOSS_1_AC + self.alpha * self.LOSS_3 + self.gamma * self.LOSS_4,
@@ -336,9 +396,20 @@ class DeepTPC_ICLR:
             self.zz = tf.placeholder(tf.float32, [None, self.z_dim])
             with tf.variable_scope("rnn", reuse=True):
                 self.yy = predictor(
-                    self.zz, self.y_dim, self.y_type, self.num_layers_g, self.h_dim_g, self.fc_activate_fn
+                    self.zz,
+                    self.y_dim,
+                    self.y_type,
+                    self.num_layers_g,
+                    self.h_dim_g,
+                    self.fc_activate_fn,
                 )  # to check the predictor output given z
-                self.s_out = selector(self.zz, self.K, self.num_layers_h, self.h_dim_h, self.fc_activate_fn)
+                self.s_out = selector(
+                    self.zz,
+                    self.K,
+                    self.num_layers_h,
+                    self.h_dim_h,
+                    self.fc_activate_fn,
+                )
 
             ## LOSS_S: selector initialization (cross-entropy wrt initialized class)
             self.LOSS_S = tf.reduce_mean(-tf.reduce_sum(self.s_onehot * log(self.s_out), axis=1))
@@ -387,7 +458,12 @@ class DeepTPC_ICLR:
     def train_selector(self, z_, s_, lr_train, k_prob):
         return self.sess.run(
             [self.solver_S, self.LOSS_S],
-            feed_dict={self.zz: z_, self.s: s_, self.lr_rate1: lr_train, self.keep_prob: k_prob},
+            feed_dict={
+                self.zz: z_,
+                self.s: s_,
+                self.lr_rate1: lr_train,
+                self.keep_prob: k_prob,
+            },
         )
 
     def train_embedding(self, x_, y_, delta_, lr_train, k_prob):
@@ -406,16 +482,21 @@ class DeepTPC_ICLR:
     ### PREDICTION FUNCTIONS
     def predict_y_hats(self, x_):
         return self.sess.run(
-            [self.y_hats, self.rnn_mask2], feed_dict={self.x: x_, self.mb_size: np.shape(x_)[0], self.keep_prob: 1.0}
+            [self.y_hats, self.rnn_mask2],
+            feed_dict={self.x: x_, self.mb_size: np.shape(x_)[0], self.keep_prob: 1.0},
         )
 
     def predict_y_bars(self, x_):
         return self.sess.run(
-            [self.y_bars, self.rnn_mask2], feed_dict={self.x: x_, self.mb_size: np.shape(x_)[0], self.keep_prob: 1.0}
+            [self.y_bars, self.rnn_mask2],
+            feed_dict={self.x: x_, self.mb_size: np.shape(x_)[0], self.keep_prob: 1.0},
         )
 
     def predict_yy(self, z_):
-        return self.sess.run(self.yy, feed_dict={self.zz: z_, self.mb_size: np.shape(z_)[0], self.keep_prob: 1.0})
+        return self.sess.run(
+            self.yy,
+            feed_dict={self.zz: z_, self.mb_size: np.shape(z_)[0], self.keep_prob: 1.0},
+        )
 
     def predict_zs_and_pis_m2(self, x_):
         return self.sess.run(
@@ -425,7 +506,8 @@ class DeepTPC_ICLR:
 
     def predict_s_sample(self, x_):
         return self.sess.run(
-            [self.s_sample, self.rnn_mask2], feed_dict={self.x: x_, self.mb_size: np.shape(x_)[0], self.keep_prob: 1.0}
+            [self.s_sample, self.rnn_mask2],
+            feed_dict={self.x: x_, self.mb_size: np.shape(x_)[0], self.keep_prob: 1.0},
         )
 
     def predict_zbars_and_pis_m1(self, x_):

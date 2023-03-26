@@ -1,4 +1,4 @@
-#!/bin/bash 
+#!/bin/bash
 
 ENV_NAME="venv"
 PYTHON_VERSION="3.9.7"

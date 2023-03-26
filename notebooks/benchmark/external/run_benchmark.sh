@@ -1,4 +1,4 @@
-#!/bin/bash 
+#!/bin/bash
 export CUDA_VISIBLE_DEVICES=-1
 
 ENV_NAME="venv"

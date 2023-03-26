@@ -1,4 +1,4 @@
-#!/bin/bash 
+#!/bin/bash
 
 # use deterministic algorithms
 export CUBLAS_WORKSPACE_CONFIG=:4096:8
@@ -25,19 +25,15 @@ main_exp()
     python data_split.py
     echo run hyperparameter selection
     bash ./parameter_selection.sh >>hparams_selection.log 2>&1
-    echo run benchmark 
+    echo run benchmark
     python benchmarks.py >>benchmark.log 2>&1
 }
 
 run_in_venv main_exp
 
 echo run external baselines
-cd external 
+cd external
 bash ./run_benchmark.sh >>external_baselines.log 2>&1
 
 cd ..
 run_in_venv python external_benchmarks.py
-
-
-
-
