@@ -22,7 +22,7 @@ def purity_score(y_true, y_pred):
     # compute contingency matrix (also called confusion matrix)
     c_matrix = contingency_matrix(y_true, y_pred)
     # return purity
-    return np.sum(np.amax(c_matrix, axis=0)) / np.sum(c_matrix)
+    return np.sum(np.amax(c_matrix, axis=0)) / np.sum(c_matrix)  # pyright: ignore
 
 
 def f_get_prediction_scores(y_true, y_pred):
@@ -50,7 +50,7 @@ def get_auc_scores(y_true, y_pred, mask=None):
     return AUROC, AUPRC
 
 
-def get_cls_scores(*args, **kwargs):
+def get_cls_scores(*args, **kwargs):  # pylint: disable=unused-argument
     c_pred = kwargs.get("c_pred", None)
     c_true = kwargs.get("c_true", None)
     if c_true is not None:
@@ -83,12 +83,12 @@ def get_cls_scores_from_label(c_true, c_pred):
 
 
 # 2. without ground truth
-def get_cls_scores_without_label(x, c_pred, y_true):
+def get_cls_scores_without_label(x, c_pred, y_true):  # pylint: disable=unused-argument
     scores = {}
     # eval = evaluate_MI(x, c_pred, y_true)
     # scores['I(C,y)'] = eval['I(C,Y)']
     # scores['H(C)'] = eval['mean[H(C)]']
-    batch_size, _, x_dim = x.shape
+    batch_size, _, x_dim = x.shape  # pylint: disable=unused-variable
     x = x.reshape((batch_size, -1))
     scores["Silhouette_knn"] = evaluate_silhouette(x, c_pred, y=None, topk=10)
     scores["Silhouette_auc"] = get_silhouette_auc(x, c_pred)
@@ -105,7 +105,7 @@ def evaluate_MI(x, c, y):
     c_one_hot = get_one_hot(c, n)
     C = torch.from_numpy(c_one_hot)
     I_CY = calculate_MI(C, Y, 0.1, 0.1).item()
-    H_X = calculate_MI(X, X, 0.1, 0.1).item()
+    H_X = calculate_MI(X, X, 0.1, 0.1).item()  # noqa F841 # pylint: disable=unused-variable
     cs = np.unique(c)
     H_C = np.zeros((len(cs),))
     for i, c_i in enumerate(cs):
@@ -130,7 +130,7 @@ def evaluate_silhouette(x, c, y=None, topk=None):
             score = silhouette_score_knn(x, c, topk=topk)
         else:
             score = silhouette_score(x, c)
-    except:
+    except Exception:  # pylint: disable=broad-exception-caught
         score = np.nan
     return score
 
@@ -139,7 +139,7 @@ def get_silhouette_auc(x, c):
     try:
         conn, silh = get_silhouette_curve(x, c)
         score = auc(conn, silh)
-    except:
+    except Exception:  # pylint: disable=broad-exception-caught
         score = np.nan
     return score
 
@@ -180,7 +180,7 @@ def silhouette_score_knn(x, c, topk=None):
     for val in c_vals:
         mask = c == val
         c_dist = dist[:, mask]
-        n, c_size = c_dist.shape
+        n, c_size = c_dist.shape  # pylint: disable=unused-variable
         idx_c = indicies[mask]
 
         if topk is not None:

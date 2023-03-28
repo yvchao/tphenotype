@@ -10,7 +10,7 @@ from ..utils.metrics import get_auc_scores
 
 class E2P(NNBaseModel):
     @device_init
-    def __init__(
+    def __init__(  # pylint: disable=unused-argument
         self,
         x_dim: int,
         y_dim: int,
@@ -41,12 +41,12 @@ class E2P(NNBaseModel):
         self.encoder = TimeSeriesEncoder(self.x_dim + 1, self.latent_size, self.hidden_size, self.num_layers)
         self.predictor = MLP(self.latent_size, self.y_dim, self.hidden_size, self.num_layers)
 
-    def forward(self, input):
+    def forward(self, X):
         # t: batch_size x series_size
         # x: batch_size x series_size x x_dim
         # y: batch_size x series_size x y_dim
         # mask: batch_size x series_size
-        t, x = input["t"], input["x"]
+        t, x = X["t"], X["x"]
 
         z = self._encode(x, t)
         logits = self.predictor(z)

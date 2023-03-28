@@ -1,4 +1,3 @@
-import numpy as np
 import torch
 from tqdm import auto
 
@@ -19,8 +18,8 @@ class AffinitySolver(torch.nn.Module):
 
     def clone_state_dict(self):
         state_dict = {}
-        for key in self.state_dict():
-            state_dict[key] = self.state_dict()[key].clone()
+        for key in self.state_dict():  # pylint: disable=not-an-iterable
+            state_dict[key] = self.state_dict()[key].clone()  # pylint: disable=unsubscriptable-object
         return state_dict
 
     @numpy_io
@@ -63,7 +62,7 @@ class AffinitySolver(torch.nn.Module):
                 # L = loss['z_rec'] + alpha * loss['B_rec'] - beta * loss['ll']
                 L = loss["z_rec"]
                 L.backward()
-                torch.nn.utils.clip_grad_norm_(self.parameters(), 1.0)
+                torch.nn.utils.clip_grad_norm_(self.parameters(), 1.0)  # pyright: ignore [reportPrivateImportUsage]
                 optimizer.step()
 
                 metrics = {k: v.detach().item() for k, v in loss.items()}

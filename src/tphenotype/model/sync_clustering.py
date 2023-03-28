@@ -1,14 +1,14 @@
+# pylint: disable=attribute-defined-outside-init
+
 import numpy as np
-from sklearn.metrics.pairwise import euclidean_distances
 from tqdm import auto
 
 from ..utils.utils import batch_d, select_by_steps
-from .graph_kmeans import GraphKmeans, initialize_centers
-from .synctwin_solver import AffinitySolver
+from .graph_kmeans import GraphKmeans
 
 
 class SyncClustering:
-    def __init__(self, predictor, K, steps=[-1], tol=1e-6, verbose=True, test_num=50, threshold=np.log(2)):
+    def __init__(self, predictor, K, steps=(-1,), tol=1e-6, verbose=True, test_num=50, threshold=np.log(2)):
         self.K = K
         self.predictor = predictor
         self.steps = np.array(steps)
@@ -84,7 +84,7 @@ class SyncClustering:
     #         proba[:, i] = np.sum(affinity[:, mask], axis=1)
     #     return proba
 
-    def _compute_proba_kmeans(self, probs_test, x_test, z_test, batch_size=1000):
+    def _compute_proba_kmeans(self, probs_test, x_test, z_test, batch_size=1000):  # pylint: disable=unused-argument
         xs = (x_test, self.x_corpus)
         probs = (probs_test, self.probs_corpus)
         A = self._similarity_piror_fast(xs, probs, identical=False)
@@ -197,7 +197,7 @@ class SyncClustering:
         if identical:
             # reduce computation
             m = I < J
-            I = I[m]
+            I = I[m]  # noqa: E741
             J = J[m]
 
         return I, J

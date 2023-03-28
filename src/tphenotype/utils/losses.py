@@ -8,10 +8,10 @@ def safe_div(num, den, eps=EPS):
     return out
 
 
-def cross_entropy(input, target, mask=None, weight=None, eps=EPS):
-    # loss = target * torch.log(input + eps) + (1 - target) * torch.log(1 - input + eps)
+def cross_entropy(input_, target, mask=None, weight=None, eps=EPS):
+    # loss = target * torch.log(input_ + eps) + (1 - target) * torch.log(1 - input_ + eps)
     # categorical cross entropy
-    loss = target * torch.log(input + eps)
+    loss = target * torch.log(input_ + eps)
     loss = torch.sum(loss, dim=-1)
     if weight is not None:
         loss = loss * weight

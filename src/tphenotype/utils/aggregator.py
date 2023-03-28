@@ -3,7 +3,9 @@ class MetricAggregator:
         self.metrics = {}
         self.counts = {}
 
-    def update(self, metrics={}):
+    def update(self, metrics=None):
+        if metrics is None:
+            metrics = dict()
         for k, v in metrics.items():
             old_v = self.metrics.get(k, 0)
             count = self.counts.get(k, 0)

@@ -1,4 +1,4 @@
-import pickle
+# pylint: disable=attribute-defined-outside-init,unused-argument
 
 import numpy as np
 from dtaidistance.dtw import dtw_cc
@@ -12,7 +12,7 @@ from ..base_model import BaseModel
 def dtw_distance(s1, s2, shape=None):
     s1 = s1.astype(np.double).reshape(shape)
     s2 = s2.astype(np.double).reshape(shape)
-    return dtw_cc.distance_ndim(s1, s2)
+    return dtw_cc.distance_ndim(s1, s2)  # pylint: disable=c-extension-no-member
 
 
 def slice_sub_sequences(x, mask=None):
@@ -61,8 +61,8 @@ class KMDTW(BaseModel):
         self.centers = np.array(self.cls.get_centers()).reshape((self.K, series_size, x_dim))
         _, y_dim = y.shape
         clusters = self.cls.get_clusters()
-        self.cluster_y = np.zeros((len(clusters), y_dim))
-        for i, c in enumerate(clusters):
+        self.cluster_y = np.zeros((len(clusters), y_dim))  # pyright: ignore
+        for i, c in enumerate(clusters):  # pyright: ignore
             self.cluster_y[i] = np.mean(y[c], axis=0)
         return self
 
@@ -77,7 +77,7 @@ class KMDTW(BaseModel):
         x = slice_sub_sequences(x)
         x = x.reshape((-1, time_steps * feature_size))
         cluster_idx = self.cls.predict(x)
-        cluster_idx = cluster_idx.reshape((sample_size, time_steps))
+        cluster_idx = cluster_idx.reshape((sample_size, time_steps))  # pyright: ignore
         return cluster_idx
 
     def predict_proba(self, x, t):

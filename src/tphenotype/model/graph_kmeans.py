@@ -79,8 +79,8 @@ class GraphKmeans:
         # update delta
         self.delta = min(self.delta, 2 * delta)
 
-        (self.idx_assigned,) = np.where(self.cluster_assignment != -1)
-        (self.idx_free,) = np.where(self.cluster_assignment == -1)
+        (self.idx_assigned,) = np.where(self.cluster_assignment != -1)  # pylint: disable=attribute-defined-outside-init
+        (self.idx_free,) = np.where(self.cluster_assignment == -1)  # pylint: disable=attribute-defined-outside-init
 
     def fit(self, max_iter=1000, tol=1e-7, patience=5):
         best_loss = np.inf
@@ -91,7 +91,7 @@ class GraphKmeans:
         # initialize clusters via approximate solution to upper bound minimization
         self.cluster_assignment = initialize_centers(self.S, self.K)
 
-        for i in range(max_iter):
+        for i in range(max_iter):  # pylint: disable=unused-variable
             self._init_clusters()
             # create similarity graph G
             G = 1.0 * (self.S <= self.delta)
@@ -121,8 +121,8 @@ class GraphKmeans:
 
         self.cluster_assignment = best_clusters
         self.cluster_centroids = best_centroids
-        (self.idx_assigned,) = np.where(self.cluster_assignment != -1)
-        (self.idx_free,) = np.where(self.cluster_assignment == -1)
+        (self.idx_assigned,) = np.where(self.cluster_assignment != -1)  # pylint: disable=attribute-defined-outside-init
+        (self.idx_free,) = np.where(self.cluster_assignment == -1)  # pylint: disable=attribute-defined-outside-init
 
         return self
 
@@ -142,8 +142,8 @@ class GraphKmeans:
             p_clusters = self.cluster_centroids[reachable]
             dist = d_js(p, p_clusters)[0]
             self.cluster_assignment[node] = reachable[np.argmin(dist)]
-        (self.idx_assigned,) = np.where(self.cluster_assignment != -1)
-        (self.idx_free,) = np.where(self.cluster_assignment == -1)
+        (self.idx_assigned,) = np.where(self.cluster_assignment != -1)  # pylint: disable=attribute-defined-outside-init
+        (self.idx_free,) = np.where(self.cluster_assignment == -1)  # pylint: disable=attribute-defined-outside-init
 
     def _update_centroids(self):
         for i in range(self.K):

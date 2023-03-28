@@ -1,5 +1,6 @@
 import numpy as np
 import torch
+import torch.utils.data
 from sklearn.model_selection import train_test_split
 
 from .utils import select_by_steps
@@ -37,7 +38,7 @@ def reverse_seq(seq, mask):
     return seq_new
 
 
-def cut_windowed_data(t, x, y, m, window_size=10, steps=[-1], range_mask=False):
+def cut_windowed_data(t, x, y, m, window_size=10, steps=(-1,), range_mask=False):
     mask_sel = select_by_steps(m, m, steps, sub_sequence=True)
     x_sel = select_by_steps(x, m, steps, sub_sequence=True, keepdims=True)
     t_sel = select_by_steps(t, m, steps, sub_sequence=True)
@@ -60,8 +61,8 @@ def cut_windowed_data(t, x, y, m, window_size=10, steps=[-1], range_mask=False):
 
 
 class Dataset(torch.utils.data.Dataset):
-    def update_property(self, property, value):
-        setattr(self, property, value)
+    def update_property(self, property_, value):
+        setattr(self, property_, value)
 
     def __init__(self, dataset):
         super().__init__()

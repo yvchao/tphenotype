@@ -29,7 +29,7 @@ class MLP(torch.nn.Module):
             modules = [torch.nn.Linear(self.input_size, self.output_size, bias=self.bias)]
         elif self.num_layers >= 2:
             modules = [torch.nn.Linear(self.input_size, self.hidden_size, bias=self.bias), self.activation]
-            for i in range(0, self.num_layers - 2, 1):
+            for i in range(0, self.num_layers - 2, 1):  # pylint: disable=unused-variable
                 modules = modules + [torch.nn.Linear(self.hidden_size, self.hidden_size, bias=bias), self.activation]
 
             modules = modules + [torch.nn.Linear(self.hidden_size, self.output_size, bias=bias)]

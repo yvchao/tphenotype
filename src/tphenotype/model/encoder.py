@@ -3,7 +3,7 @@ import torch
 
 from ..base_model import NNBaseModel
 from ..nn import TimeSeriesEncoder
-from ..utils import sort_complex
+from ..utils import sort_complex  # pyright: ignore
 from ..utils.decorators import device_init, numpy_io
 from ..utils.utils import EPS, check_shape
 from .symbolic_eval import get_function, get_transfer_function, plot
@@ -16,7 +16,7 @@ def pairwise_distances(x):
     return dist
 
 
-def find_similar_series(curves, threshold):
+def find_similar_series(curves, threshold):  # pylint: disable=unused-argument
     dist = pairwise_distances(curves)
     # mask = dist <= threshold
     # dist[mask] = 1
@@ -39,7 +39,7 @@ class LaplaceEncoder(NNBaseModel):
         hidden_size=20,
         num_layers=2,
         equivariant_embed=True,
-        **kwargs,
+        **kwargs,  # pylint: disable=unused-argument
     ):
         super().__init__()
         self.name = "Laplace Encoder"
@@ -74,20 +74,20 @@ class LaplaceEncoder(NNBaseModel):
     def F(self, poles, coeffs, idx, step):
         p = poles[idx, step]
         c = coeffs[idx, step]
-        F, s = get_transfer_function(p, c)
+        F, s = get_transfer_function(p, c)  # pylint: disable=unused-variable
         return F
 
     def f(self, poles, coeffs, idx, step):
         p = poles[idx, step]
         c = coeffs[idx, step]
-        f, t = get_function(p, c, return_complex=False)
+        f, t = get_function(p, c, return_complex=False)  # pylint: disable=unused-variable
         return f
 
     def plot(self, poles, coeffs, idx, step):
         p = poles[idx, step]
         c = coeffs[idx, step]
         f, t = get_function(p, c, num_digits=10)
-        fig = plot(f, t, range=(-0.05, 1.05))
+        fig = plot(f, t, range_=(-0.05, 1.05))
         return fig
 
     @numpy_io
@@ -201,10 +201,10 @@ class LaplaceEncoder(NNBaseModel):
 
     def _unfold(self, series, fill_value=0.0):
         batch_size, _ = series.shape
-        padding = fill_value * series.new_ones((batch_size, self.window_size - 1))
+        padding = fill_value * series.new_ones((batch_size, self.window_size - 1))  # pyright: ignore
         series = torch.cat([padding, series], dim=1)
         # batch_size x series_size x window_size
-        unfold = series.unfold(1, self.window_size, 1)
+        unfold = series.unfold(1, self.window_size, 1)  # pyright: ignore
         return unfold
 
     def _encode(self, f, t):
@@ -244,8 +244,10 @@ class LaplaceEncoder(NNBaseModel):
             p_i = poles[..., :, np.newaxis, :]
             t = times[..., :, :, np.newaxis]
             # t = torch.clamp(t, min=0.0, max=1.0)
-            components += 1.0 * (t > 0) * c_id * torch.pow(t, d) * torch.exp(p_i * t) / np.math.factorial(d)
-        fs = torch.sum(components, axis=-1)
+            components += (
+                1.0 * (t > 0) * c_id * torch.pow(t, d) * torch.exp(p_i * t) / np.math.factorial(d)  # pyright: ignore
+            )
+        fs = torch.sum(components, axis=-1)  # pyright: ignore
         # fs: ... x series_size x window_size
         return fs
 
@@ -266,9 +268,9 @@ class LaplaceEncoder(NNBaseModel):
         fs = self._ilt(poles, coeffs, times)
         return fs
 
-    def forward(self, input):
-        f = input["f"]
-        t = input["t"]
+    def forward(self, X):
+        f = X["f"]
+        t = X["t"]
 
         poles, coeffs = self._encode(f, t)
         f_rec = self._decode(poles, coeffs, t)
@@ -335,7 +337,7 @@ class LaplaceEncoder(NNBaseModel):
     #     return l1
 
     def _unique(self, poles, coeffs, mask):
-        batch_size, series_size, _ = poles.shape
+        batch_size, series_size, _ = poles.shape  # pylint: disable=unused-variable
         if self.window_size is not None:
             length = self.window_size
         else:

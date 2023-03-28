@@ -1,10 +1,10 @@
 import numpy as np
 import torch
 
-from ..utils.decorators import device_init, numpy_io, run_in_batch
+from ..utils.decorators import device_init, numpy_io
 from ..utils.losses import cross_entropy
 from ..utils.metrics import get_auc_scores
-from ..utils.utils import EPS, check_shape, select_by_steps
+from ..utils.utils import check_shape
 from .predictor import Predictor
 
 
@@ -23,13 +23,13 @@ class JointPredictor(Predictor):
             out = self.forward({"x": x, "t": t})
         return out["prob"]
 
-    def forward(self, input):
+    def forward(self, X):
         # t: batch_size x series_size
         # x: batch_size x series_size x x_dim
         # y: batch_size x series_size x y_dim
         # mask: batch_size x series_size
-        t = input["t"]
-        x = input["x"]
+        t = X["t"]
+        x = X["x"]
         # y = input['y']
         # mask = input['mask']
         x_rep = self._encode(x, t).detach()
@@ -59,7 +59,7 @@ class JointPredictor(Predictor):
 
         for i, d in enumerate(self.time_series_dims):
             x_d = x[:, :, d]
-            encoder_losses = self.encoders[i].expose_loss(x_d, t, mask)
+            encoder_losses = self.encoders[i].expose_loss(x_d, t, mask)  # pyright: ignore
             for k, v in encoder_losses.items():
                 losses[k] = losses.get(k, 0.0) + v / len(self.time_series_dims)
         return losses
@@ -78,11 +78,10 @@ class JointPredictor(Predictor):
 
         for i, d in enumerate(self.time_series_dims):
             x_d = x[:, :, d]
-            encoder_losses = self.encoders[i].expose_loss(x_d, t, mask)
+            encoder_losses = self.encoders[i].expose_loss(x_d, t, mask)  # pyright: ignore
             losses["rmse"] = losses.get("rmse", 0.0) + encoder_losses["rmse"].detach().cpu() / len(
                 self.time_series_dims
             )
-        #
 
         AUROC, AUPRC = get_auc_scores(y, y_pred, mask=mask.cpu())
         losses["AUROC"] = torch.tensor(np.mean(AUROC))
@@ -100,8 +99,8 @@ class JointPredictor(Predictor):
         epochs=100,
         max_grad_norm=1,
         tolerance=None,
-        device=None,
         parameters=None,
+        return_history=False,
         verbose=True,
         **kwargs,
     ):
@@ -117,6 +116,6 @@ class JointPredictor(Predictor):
         if self.cls.K > 0:
             self.cls.fit(x, t, mask)
         if verbose:
-            print(f"done")
+            print("done")
 
         return self

@@ -21,15 +21,15 @@ def device_init(init):
     return decorate
 
 
-def tuple_to(input, to):
-    out = tuple(to(i) for i in input)
+def tuple_to(input_, to):
+    out = tuple(to(i) for i in input_)
     return out
 
 
-def dict_to(dict, to):
-    for k, v in dict.items():
-        dict[k] = to(v)
-    return dict
+def dict_to(dict_, to):
+    for k, v in dict_.items():
+        dict_[k] = to(v)
+    return dict_
 
 
 def numpy_to_tensor(array):

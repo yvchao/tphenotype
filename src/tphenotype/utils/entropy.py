@@ -1,6 +1,5 @@
 # https://github.com/yuxi120407/DIB/blob/main/utils.py
 
-import numpy as np
 import torch
 
 
@@ -20,7 +19,7 @@ def reyi_entropy(x, sigma):
     alpha = 1.01
     k = calculate_gram_mat(x, sigma)
     k = k / torch.trace(k)
-    L, Q = torch.torch.linalg.eigh(k)
+    L, Q = torch.torch.linalg.eigh(k)  # pylint: disable=unused-variable  # type: ignore
     eigv = torch.abs(L)
     # eigv = torch.abs(torch.symeig(k, eigenvectors=True)[0])
     eig_pow = eigv**alpha
@@ -34,7 +33,7 @@ def joint_entropy(x, y, s_x, s_y):
     y = calculate_gram_mat(y, s_y)
     k = torch.mul(x, y)
     k = k / torch.trace(k)
-    L, Q = torch.torch.linalg.eigh(k)
+    L, Q = torch.torch.linalg.eigh(k)  # pylint: disable=unused-variable  # type: ignore
     eigv = torch.abs(L)
     # eigv = torch.abs(torch.symeig(k, eigenvectors=True)[0])
     eig_pow = eigv**alpha

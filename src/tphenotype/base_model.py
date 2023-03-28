@@ -1,7 +1,9 @@
 import abc
+from typing import Any
 
 import numpy as np
 import torch
+import torch.utils.data
 from tqdm import auto
 
 from .utils.aggregator import MetricAggregator
@@ -11,8 +13,8 @@ from .utils.utils import calculate_loss, get_summary
 
 class BaseModel(object, metaclass=abc.ABCMeta):
     @abc.abstractmethod
-    def fit(self, train_set):
-        pass
+    def fit(self, train_set, *args, **kwargs):
+        ...
 
 
 class NNBaseModel(BaseModel, torch.nn.Module):
@@ -22,18 +24,20 @@ class NNBaseModel(BaseModel, torch.nn.Module):
         self.device = "cpu"
 
     @abc.abstractmethod
-    def forward(self, X):
-        pass
+    def forward(self, X) -> Any:
+        ...
 
     @abc.abstractmethod
-    def _calculate_train_losses(self, batch):
-        pass
+    def _calculate_train_losses(self, batch) -> Any:
+        ...
 
     @abc.abstractmethod
-    def _calculate_valid_losses(self, batch):
-        pass
+    def _calculate_valid_losses(self, batch) -> Any:
+        ...
 
-    def _train_epoch(self, loss_weights, data_loader, optimizer, max_grad_norm=1, **kwargs):
+    def _train_epoch(
+        self, loss_weights, data_loader, optimizer, max_grad_norm=1, **kwargs  # pylint: disable=unused-argument
+    ):
         self.train()
         agg = MetricAggregator()
         for batch in data_loader:
@@ -52,7 +56,9 @@ class NNBaseModel(BaseModel, torch.nn.Module):
 
             if L.requires_grad:
                 L.backward()
-                torch.nn.utils.clip_grad_norm_(self.parameters(), max_grad_norm)
+                torch.nn.utils.clip_grad_norm_(  # pyright: ignore [reportPrivateImportUsage]
+                    self.parameters(), max_grad_norm
+                )
                 optimizer.step()
 
         metrics_train = agg.query()
@@ -102,7 +108,7 @@ class NNBaseModel(BaseModel, torch.nn.Module):
             valid_set = valid_set.get_all_data()
         return train_set, valid_set
 
-    def fit(
+    def fit(  # pylint: disable=arguments-differ
         self,
         train_set,
         loss_weights,

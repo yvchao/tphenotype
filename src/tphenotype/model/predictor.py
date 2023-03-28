@@ -6,7 +6,7 @@ from ..nn import MLP
 from ..utils.decorators import device_init, numpy_io, run_in_batch
 from ..utils.losses import cross_entropy
 from ..utils.metrics import get_auc_scores
-from ..utils.utils import EPS, check_shape, select_by_steps
+from ..utils.utils import EPS, check_shape
 from .cluster_explainer import explain, fit_cluster
 from .encoder import LaplaceEncoder
 from .sync_clustering import SyncClustering
@@ -26,7 +26,7 @@ default_encoder_config = {
 default_encoder_loss_weights = {
     "rmse": 1.0,  # regression loss
     "cont": 0.1,  # minimize used components
-    "pole": 1.0,  # seperation of poles
+    "pole": 1.0,  # separation of poles
     "real": 0.01,  # only generate real function (penalty for imaginary part)
 }
 
@@ -44,7 +44,7 @@ class Predictor(NNBaseModel):
         self,
         x_dim,
         y_dim,
-        time_series_dims=[],
+        time_series_dims=tuple(),
         feature_names=None,
         hidden_size=20,
         num_layer=3,
@@ -89,7 +89,7 @@ class Predictor(NNBaseModel):
 
         self.extra_dim = None
         if len(self.time_series_dims) > 0:
-            self.extra_dim = len(self.time_series_dims) * self.encoders[0].get_embed_size()
+            self.extra_dim = len(self.time_series_dims) * self.encoders[0].get_embed_size()  # pyright: ignore
         else:
             self.extra_dim = 0
 
@@ -119,7 +119,11 @@ class Predictor(NNBaseModel):
         for i, d in enumerate(self.time_series_dims):
             x_d = x[:, :, d]
             # normalize the embedding to avoid saturation
-            x_d_embed = self.encoders[i]._get_embed(x_d, t, normalize=True)
+            x_d_embed = self.encoders[i]._get_embed(  # pyright: ignore  # pylint: disable=protected-access
+                x_d,
+                t,
+                normalize=True,
+            )
             x_rep.append(x_d_embed)
         x_rep = torch.cat(x_rep, dim=-1)
 
@@ -146,11 +150,23 @@ class Predictor(NNBaseModel):
             new_x = [x_rep[:, :, : self.x_dim]]
             for i in range(len(self.time_series_dims)):
                 encoder = self.encoders[i]
-                embed_size = encoder.get_embed_size()
-                times = torch.linspace(0, 1, steps=2 * encoder.window_size, device=self.device)[np.newaxis, :]
+                embed_size = encoder.get_embed_size()  # pyright: ignore
+                times = torch.linspace(
+                    0,
+                    1,
+                    steps=2 * encoder.window_size,  # pyright: ignore
+                    device=self.device,
+                )[np.newaxis, :]
                 embed_i = x_rep[:, :, self.x_dim + i * embed_size : self.x_dim + (i + 1) * embed_size]
-                poles, coeffs = encoder._embed_split(embed_i)
-                curve_i = encoder._decode(poles, coeffs, times, windowed=False)
+                poles, coeffs = encoder._embed_split(  # pyright: ignore  # pylint: disable=protected-access
+                    embed_i,
+                )
+                curve_i = encoder._decode(  # pyright: ignore  # pylint: disable=protected-access
+                    poles,
+                    coeffs,
+                    times,
+                    windowed=False,
+                )
                 new_x.append(torch.real(curve_i))
             new_x = torch.cat(new_x, dim=-1)
         return new_x
@@ -159,15 +175,15 @@ class Predictor(NNBaseModel):
         probs = self.output_fn(z + self.bias)
         return probs
 
-    def forward(self, input):
+    def forward(self, X):
         # t: batch_size x series_size
         # x: batch_size x series_size x x_dim
         # y: batch_size x series_size x y_dim
         # mask: batch_size x series_size
-        # t = input['t']
-        x_rep = input["x_rep"]
-        # y = input['y']
-        # mask = input['mask']
+        # t = X['t']
+        x_rep = X["x_rep"]
+        # y = X['y']
+        # mask = X['mask']
 
         z = self.g(x_rep)
         prob = self._get_probs(z)
@@ -318,9 +334,11 @@ class Predictor(NNBaseModel):
             max_degree = 0
 
         extra_feat = []
-        extra_feat += [[f"pole_{i+1}_re", f"pole_{i+1}_im"] for i in range(num_poles)]
+        extra_feat += [[f"pole_{i+1}_re", f"pole_{i+1}_im"] for i in range(num_poles)]  # pyright: ignore
         extra_feat += [
-            [f"coef_{i+1}_{d+1}_re", f"coef_{i+1}_{d+1}_im"] for i in range(num_poles) for d in range(max_degree)
+            [f"coef_{i+1}_{d+1}_re", f"coef_{i+1}_{d+1}_im"]
+            for i in range(num_poles)  # pyright: ignore
+            for d in range(max_degree)  # pyright: ignore
         ]
         extra_feat = [item for sublist in extra_feat for item in sublist]
 
@@ -338,7 +356,7 @@ class Predictor(NNBaseModel):
     def explain_cluster(self):
         x = self.cls.x_corpus
         c = self.cls.label_corpus
-        self.exp = fit_cluster(x, c, max_depth=3)
+        self.exp = fit_cluster(x, c, max_depth=3)  # pylint: disable=attribute-defined-outside-init
         feature_names = self._get_x_rep_feature_names()
         description = explain(self.exp, feature_names=feature_names)
         return description
@@ -379,11 +397,11 @@ class Predictor(NNBaseModel):
             # 1.3 train the encoder
             if verbose:
                 print(f"stage 1 - fit the {encoder.name} {i+1}/{len(self.time_series_dims)}")
-            encoder.fit(**encoder_args)
+            encoder.fit(**encoder_args)  # pyright: ignore
             # enable sorting of the poles to obtain equivariant representation
-            encoder.equivariant_embed = True
+            encoder.equivariant_embed = True  # pyright: ignore
 
-    def evaluate_encoder_params(
+    def evaluate_encoder_params(  # pylint: disable=unused-argument
         self,
         train_set,
         test_set,
@@ -411,11 +429,11 @@ class Predictor(NNBaseModel):
             t = test_set_i["t"]
             m = test_set_i["mask"]
 
-            poles, coeffs = encoder.encode(f, t)
+            poles, coeffs = encoder.encode(f, t)  # pyright: ignore
             # batch_size x series_size x series_size
-            batch_size, series_size = f.shape
+            batch_size, series_size = f.shape  # pylint: disable=unused-variable
             last_step = np.sum(m, axis=-1).astype("int") - 1
-            f_rec_r, f_rec_i = encoder.decode(poles, coeffs, t)
+            f_rec_r, f_rec_i = encoder.decode(poles, coeffs, t)  # pyright: ignore
             f_rec = f_rec_r + 1j * f_rec_i
             f_rec = f_rec[np.arange(batch_size), last_step]
             diff = np.square(np.abs(f - f_rec))
@@ -424,7 +442,15 @@ class Predictor(NNBaseModel):
         loss /= len(self.time_series_dims)
         return loss
 
-    def _fit_predictor(self, train_set, loss_weights, valid_set, args, learning_rate, verbose):
+    def _fit_predictor(  # pylint: disable=unused-argument
+        self,
+        train_set,
+        loss_weights,
+        valid_set,
+        args,
+        learning_rate,
+        verbose,
+    ):
         predictor_args = args.copy()
         predictor_args["train_set"] = self._encode_dataset(train_set)
         if valid_set is not None:
@@ -433,10 +459,10 @@ class Predictor(NNBaseModel):
             predictor_args["valid_set"] = None
         predictor_args["parameters"] = [{"params": self.g.parameters(), "lr": learning_rate}]
         if verbose:
-            print(f"stage 2 - fit the predictor")
+            print("stage 2 - fit the predictor")
         super().fit(**predictor_args)
 
-    def evaluate_predictor_params(
+    def evaluate_predictor_params(  # pylint: disable=unused-argument
         self,
         train_set,
         test_set,
@@ -462,7 +488,7 @@ class Predictor(NNBaseModel):
         y = test_set["y"]
         mask = test_set["mask"]
         y_pred = self.predict_proba_g(x, t)
-        AUROC, AUPRC = get_auc_scores(y, y_pred, mask=mask)
+        AUROC, AUPRC = get_auc_scores(y, y_pred, mask=mask)  # pylint: disable=unused-variable
         loss = np.mean(AUROC)
         return loss
 
@@ -474,7 +500,7 @@ class Predictor(NNBaseModel):
         self.cls.verbose = verbose
         self.cls.fit(x, t, mask)
 
-    def fit(
+    def fit(  # pylint: disable=unused-argument
         self,
         train_set,
         loss_weights,
@@ -484,8 +510,8 @@ class Predictor(NNBaseModel):
         epochs=100,
         max_grad_norm=1,
         tolerance=None,
-        device=None,
         parameters=None,
+        return_history=False,
         verbose=True,
         **kwargs,
     ):
@@ -517,7 +543,7 @@ class Predictor(NNBaseModel):
 
         # stage 3 - clustering based on similarity graph
         if verbose:
-            print(f"stage 3 - clustering on similarity graph")
+            print("stage 3 - clustering on similarity graph")
 
         #         x = train_set['x']
         #         t = train_set['t']
@@ -527,6 +553,6 @@ class Predictor(NNBaseModel):
         #         self.cls.fit(x, t, mask)
         self.fit_clusters(train_set, verbose)
         if verbose:
-            print(f"done")
+            print("done")
 
         return self
