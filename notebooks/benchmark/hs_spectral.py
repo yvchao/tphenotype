@@ -2,30 +2,19 @@
 # coding: utf-8
 
 import itertools
-import json
 import os
 import pickle
 
 import numpy as np
 import pandas as pd
 import torch
-from benchmark import (
-    Cls_config,
-    Encoder_config,
-    KME2P_config,
-    Predictor_config,
-    benchmark,
-    evaluate,
-    loss_weights,
-)
+from benchmark import evaluate, loss_weights
 from tqdm import auto
 
-from tphenotype import LaplaceEncoder, Predictor
-from tphenotype.baselines import E2P, KMDTW, KME2P, SpectralDTW
-from tphenotype.utils import get_auc_scores, get_cls_scores, select_by_steps
+from tphenotype.baselines import SpectralDTW
 
 
-def evaluate_predictor(method, config, loss_weights, splits, seed=0, epochs=50, steps=[-1], metric="Hprc"):
+def evaluate_predictor(method, config, loss_weights_, splits, seed=0, epochs=50, steps=(-1,), metric="Hprc"):
     results = []
     for i, dataset in auto.tqdm(enumerate(splits), total=len(splits), desc=f"{method.__name__}"):
         train_set, valid_set, test_set = dataset
@@ -33,16 +22,14 @@ def evaluate_predictor(method, config, loss_weights, splits, seed=0, epochs=50, 
         torch.random.manual_seed(seed + i)
         torch.use_deterministic_algorithms(True)
         model = method(**config)
-        model = model.fit(train_set, loss_weights, valid_set=valid_set, epochs=epochs, verbose=False)
+        model = model.fit(train_set, loss_weights_, valid_set=valid_set, epochs=epochs, verbose=False)
         scores = evaluate(model, test_set, steps)
         results.append(scores[metric])
     results = np.array(results)
-    return results, model
+    return results, model  # pyright: ignore
 
 
 os.makedirs("hyperparam_selection", exist_ok=True)
-
-# In[5]:
 
 
 def load_data(dataname, verbose=False):
@@ -77,14 +64,11 @@ def load_data(dataname, verbose=False):
     return splits, feat_list, temporal_dims
 
 
-# In[7]:
-
-
 def hyperparam_selection_predictor(dataname, search_space, K, seed=0, epochs=50):
-    splits, feat_list, temporal_dims = load_data(dataname, verbose=True)
-    tr_set, va_set, te_set = splits[0]
-    _, T, x_dim = tr_set["x"].shape
-    _, _, y_dim = tr_set["y"].shape
+    splits, feat_list, temporal_dims = load_data(dataname, verbose=True)  # pylint: disable=unused-variable
+    tr_set, va_set, te_set = splits[0]  # pylint: disable=unused-variable
+    _, T, x_dim = tr_set["x"].shape  # pylint: disable=unused-variable
+    _, _, y_dim = tr_set["y"].shape  # pylint: disable=unused-variable
 
     # Configuration
     spectral_config = {"K": K, "sigma": 1.0}
@@ -109,11 +93,11 @@ def hyperparam_selection_predictor(dataname, search_space, K, seed=0, epochs=50)
         print(f"test config {msg} ...")
 
         metric = "Hprc" if dataname != "Synth" else "PURITY"
-        results, model = evaluate_predictor(
+        results, model = evaluate_predictor(  # pylint: disable=unused-variable
             SpectralDTW, test_config, loss_weights, splits, seed=seed, epochs=epochs, metric=metric
         )
-        scores.loc[i, "H_mean"] = np.mean(results)
-        scores.loc[i, "H_std"] = np.std(results)
+        scores.loc[i, "H_mean"] = np.mean(results)  # pyright: ignore
+        scores.loc[i, "H_std"] = np.std(results)  # pyright: ignore
         scores.loc[i, "config"] = msg
         scores.to_csv(result_file)
 
@@ -124,10 +108,6 @@ def hyperparam_selection_predictor(dataname, search_space, K, seed=0, epochs=50)
     print(scores.loc[best, "config"])
 
 
-# In[8]:
-# In[4]:
-
-
 def read_config(config_str):
     config = {}
     for item in config_str.split(","):
@@ -136,22 +116,20 @@ def read_config(config_str):
     return config
 
 
-search_space = {
+search_space_ = {
     "sigma": [0.1, 1.0, 5, 10],
 }
 
-for dataname in ["Synth"]:
+for dataname_ in ["Synth"]:
     # calculation is only feasible on synthetic data
-    result_file = f"hyperparam_selection/{dataname}_K_orig.csv"
-    scores = pd.read_csv(result_file, index_col=0)
-    scores = scores.astype({"H_mean": "float"})
-    best = scores["H_mean"].idxmax()
+    result_file_ = f"hyperparam_selection/{dataname_}_K_orig.csv"
+    scores_ = pd.read_csv(result_file_, index_col=0)
+    scores_ = scores_.astype({"H_mean": "float"})
+    best_ = scores_["H_mean"].idxmax()
 
-    config = read_config(scores.loc[best, "config"])
+    config_ = read_config(scores_.loc[best_, "config"])
 
-    K = int(config["K"])
-    K = 3
+    K_ = int(config_["K"])
+    K_ = 3
 
-    hyperparam_selection_predictor(dataname, search_space, K)
-
-# In[ ]:
+    hyperparam_selection_predictor(dataname_, search_space_, K_)

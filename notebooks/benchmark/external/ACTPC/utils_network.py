@@ -1,15 +1,16 @@
-import numpy as np
+# pylint: disable=import-error
+
 import tensorflow as tf
-from tensorflow.contrib.layers import fully_connected as FC_Net
+from tensorflow.contrib.layers import fully_connected as FC_Net  # pyright: ignore
 
 
-### CONSTRUCT MULTICELL FOR MULTI-LAYER RNNS
+# -- CONSTRUCT MULTICELL FOR MULTI-LAYER RNNS
 def create_rnn_cell(num_units, num_layers, keep_prob, RNN_type, activation_fn):
     """
     GOAL         : create multi-cell (including a single cell) to construct multi-layer RNN
     num_units    : number of units in each layer
     num_layers   : number of layers in MulticellRNN
-    keep_prob    : keep probabilty [0, 1]  (if None, dropout is not employed)
+    keep_prob    : keep probability [0, 1]  (if None, dropout is not employed)
     RNN_type     : either 'LSTM' or 'GRU'
     """
     if activation_fn == "None":
@@ -24,17 +25,17 @@ def create_rnn_cell(num_units, num_layers, keep_prob, RNN_type, activation_fn):
             # cell = tf.contrib.rnn.LSTMCell(num_units, activation=activation_fn)
         else:
             print("ERROR: WRONG RNN TYPE")
-        if not keep_prob is None:
+        if keep_prob is not None:
             cell = tf.contrib.rnn.DropoutWrapper(
-                cell, input_keep_prob=keep_prob, output_keep_prob=keep_prob
+                cell, input_keep_prob=keep_prob, output_keep_prob=keep_prob  # pyright: ignore
             )  # state_keep_prob=keep_prob
-        cells.append(cell)
+        cells.append(cell)  # pyright: ignore
     cell = tf.contrib.rnn.MultiRNNCell(cells)
 
     return cell
 
 
-### EXTRACT STATE OUTPUT OF MULTICELL-RNNS
+# -- EXTRACT STATE OUTPUT OF MULTICELL-RNNS
 def create_concat_state_h(state, num_layers, RNN_type, BiRNN=None):
     """
     GOAL	     : concatenate the tuple-type tensor (state) into a single tensor
@@ -44,55 +45,55 @@ def create_concat_state_h(state, num_layers, RNN_type, BiRNN=None):
     RNN_type     : either 'LSTM' or 'GRU'
     """
     for i in range(num_layers):
-        if BiRNN != None:
+        if BiRNN is not None:
             if RNN_type == "LSTM":
-                tmp = tf.concat([state[0][i][1], state[1][i][1]], axis=1)  ## i-th layer, h state for LSTM
+                tmp = tf.concat([state[0][i][1], state[1][i][1]], axis=1)  # i-th layer, h state for LSTM
             elif RNN_type == "GRU":
-                tmp = tf.concat([state[0][i], state[1][i]], axis=1)  ## i-th layer, h state for GRU
+                tmp = tf.concat([state[0][i], state[1][i]], axis=1)  # i-th layer, h state for GRU
             else:
                 print("ERROR: WRONG RNN CELL TYPE")
         else:
             if RNN_type == "LSTM":
-                tmp = state[i][1]  ## i-th layer, h state for LSTM
+                tmp = state[i][1]  # i-th layer, h state for LSTM
             elif RNN_type == "GRU":
-                tmp = state[i]  ## i-th layer, h state for GRU
+                tmp = state[i]  # i-th layer, h state for GRU
             else:
                 print("ERROR: WRONG RNN CELL TYPE")
 
         if i == 0:
-            rnn_state_out = tmp
+            rnn_state_out = tmp  # pyright: ignore
         else:
-            rnn_state_out = tf.concat([rnn_state_out, tmp], axis=1)
+            rnn_state_out = tf.concat([rnn_state_out, tmp], axis=1)  # pyright: ignore
 
-    return rnn_state_out
+    return rnn_state_out  # pyright: ignore
 
 
 def create_concat_state_c(state, num_layers, RNN_type, BiRNN=None):
     for i in range(num_layers):
-        if BiRNN != None:
+        if BiRNN is not None:
             if RNN_type == "LSTM":
-                tmp = tf.concat([state[0][i][0], state[1][i][0]], axis=1)  ## i-th layer, c state for LSTM
+                tmp = tf.concat([state[0][i][0], state[1][i][0]], axis=1)  # i-th layer, c state for LSTM
             elif RNN_type == "GRU":
-                tmp = tf.concat([state[0][i], state[1][i]], axis=1)  ## i-th layer, c=h state for GRU
+                tmp = tf.concat([state[0][i], state[1][i]], axis=1)  # i-th layer, c=h state for GRU
             else:
                 print("ERROR: WRONG RNN CELL TYPE")
         else:
             if RNN_type == "LSTM":
-                tmp = state[i][0]  ## i-th layer, c state for LSTM
+                tmp = state[i][0]  # i-th layer, c state for LSTM
             elif RNN_type == "GRU":
-                tmp = state[i]  ## i-th layer, h state for GRU
+                tmp = state[i]  # i-th layer, h state for GRU
             else:
                 print("ERROR: WRONG RNN CELL TYPE")
 
         if i == 0:
-            rnn_state_out = tmp
+            rnn_state_out = tmp  # pyright: ignore
         else:
-            rnn_state_out = tf.concat([rnn_state_out, tmp], axis=1)
+            rnn_state_out = tf.concat([rnn_state_out, tmp], axis=1)  # pyright: ignore
 
-    return rnn_state_out
+    return rnn_state_out  # pyright: ignore
 
 
-### FEEDFORWARD NETWORK
+# -- FEEDFORWARD NETWORK
 def create_FCNet(inputs, num_layers, h_dim, h_fn, o_dim, o_fn, w_init, w_reg=None, keep_prob=1.0):
     """
     GOAL             : Create FC network with different specifications
@@ -101,9 +102,9 @@ def create_FCNet(inputs, num_layers, h_dim, h_fn, o_dim, o_fn, w_init, w_reg=Non
     h_dim  (int)     : number of hidden units
     h_fn             : activation function for hidden layers (default: tf.nn.relu)
     o_dim  (int)     : number of output units
-    o_fn             : activation function for output layers (defalut: None)
-    w_init           : initialization for weight matrix (defalut: Xavier)
-    keep_prob        : keep probabilty [0, 1]  (if None, dropout is not employed)
+    o_fn             : activation function for output layers (default: None)
+    w_init           : initialization for weight matrix (default: Xavier)
+    keep_prob        : keep probability [0, 1]  (if None, dropout is not employed)
     """
     # default active functions (hidden: relu, out: None)
     if h_fn is None:
@@ -121,15 +122,27 @@ def create_FCNet(inputs, num_layers, h_dim, h_fn, o_dim, o_fn, w_init, w_reg=Non
         else:
             if layer == 0:
                 h = FC_Net(inputs, h_dim, activation_fn=h_fn, weights_initializer=w_init, weights_regularizer=w_reg)
-                if not keep_prob is None:
+                if keep_prob is not None:
                     h = tf.nn.dropout(h, keep_prob=keep_prob)
 
             elif layer > 0 and layer != (num_layers - 1):  # layer > 0:
-                h = FC_Net(h, h_dim, activation_fn=h_fn, weights_initializer=w_init, weights_regularizer=w_reg)
-                if not keep_prob is None:
+                h = FC_Net(
+                    h,  # pyright: ignore
+                    h_dim,
+                    activation_fn=h_fn,
+                    weights_initializer=w_init,
+                    weights_regularizer=w_reg,
+                )
+                if keep_prob is not None:
                     h = tf.nn.dropout(h, keep_prob=keep_prob)
 
             else:  # layer == num_layers-1 (the last layer)
-                out = FC_Net(h, o_dim, activation_fn=o_fn, weights_initializer=w_init, weights_regularizer=w_reg)
+                out = FC_Net(
+                    h,  # pyright: ignore
+                    o_dim,
+                    activation_fn=o_fn,
+                    weights_initializer=w_init,
+                    weights_regularizer=w_reg,
+                )
 
-    return out
+    return out  # pyright: ignore

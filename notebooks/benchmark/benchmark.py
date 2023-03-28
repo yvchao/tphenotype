@@ -1,7 +1,7 @@
 import numpy as np
 import pandas as pd
 import torch
-from numpy.core.multiarray import interp
+from numpy.core.multiarray import interp  # pyright: ignore
 from tqdm import auto
 
 from tphenotype.utils import data_split, get_auc_scores, get_cls_scores, select_by_steps
@@ -22,7 +22,7 @@ def data_interpolation(t, x, samples=20):
     return xs
 
 
-def evaluate(model, dataset, steps=[-1]):
+def evaluate(model, dataset, steps=(-1,)):
     x = dataset["x"]
     t = dataset["t"]
     c = dataset.get("c", None)
@@ -32,18 +32,17 @@ def evaluate(model, dataset, steps=[-1]):
     try:
         c_pred = model.predict_cluster(x, t, mask, steps)
         y_pred = model.predict_proba(x, t, mask, steps)
-    except:
+    except Exception:  # pylint: disable=broad-exception-caught
         try:
             c_pred = model.predict_cluster(x, t)
             c_pred = select_by_steps(c_pred, mask, steps)
-        except:
+        except Exception:  # pylint: disable=broad-exception-caught
             c_pred = None
 
         try:
             y_pred = model.predict_proba(x, t)
             y_pred = select_by_steps(y_pred, mask, steps)
-
-        except:
+        except Exception:  # pylint: disable=broad-exception-caught
             y_pred = None
 
     if c is not None:
@@ -84,7 +83,7 @@ def get_ci(series, decimals=3):
     return out
 
 
-def benchmark_old(method, config, dataset, loss_weights, steps=[-1], epochs=50, n=3, seed=0):
+def benchmark_old(method, config, dataset, loss_weights_, steps=(-1,), epochs=50, n=3, seed=0):
     dtype = "float32"
 
     # train_set, valid_set, test_set = dataset
@@ -97,7 +96,7 @@ def benchmark_old(method, config, dataset, loss_weights, steps=[-1], epochs=50, 
 
         torch.random.manual_seed(seed + i)
         model = method(**config)
-        model = model.fit(train_set, loss_weights, valid_set=valid_set, epochs=epochs, verbose=False)
+        model = model.fit(train_set, loss_weights_, valid_set=valid_set, epochs=epochs, verbose=False)
         scores = evaluate(model, test_set, steps)
         results.append(scores)
     results = pd.DataFrame(results)
@@ -105,8 +104,8 @@ def benchmark_old(method, config, dataset, loss_weights, steps=[-1], epochs=50, 
     return summary
 
 
-def benchmark(method, config, splits, loss_weights, steps=[-1], epochs=50, seed=0):
-    dtype = "float32"
+def benchmark(method, config, splits, loss_weights_, steps=(-1,), epochs=50, seed=0):
+    dtype = "float32"  # noqa F841 # pylint: disable=unused-variable
 
     results = []
     for i, dataset in auto.tqdm(enumerate(splits), total=len(splits), desc=f"{method.__name__}"):
@@ -114,7 +113,7 @@ def benchmark(method, config, splits, loss_weights, steps=[-1], epochs=50, seed=
 
         torch.random.manual_seed(seed + i)
         model = method(**config)
-        model = model.fit(train_set, loss_weights, valid_set=valid_set, epochs=epochs, verbose=False)
+        model = model.fit(train_set, loss_weights_, valid_set=valid_set, epochs=epochs, verbose=False)
         scores = evaluate(model, test_set, steps)
         results.append(scores)
     results = pd.DataFrame(results)

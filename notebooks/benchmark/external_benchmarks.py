@@ -14,7 +14,7 @@ from benchmark import (
 )
 
 
-def calculate_performance(preds, dataset, steps=[-1]):
+def calculate_performance(preds, dataset, steps=(-1,)):
     x = dataset["x"]
     t = dataset["t"]
     c = dataset.get("c", None)
@@ -48,7 +48,7 @@ def calculate_performance(preds, dataset, steps=[-1]):
     return scores
 
 
-def evaluation(preds, data, steps=[-1]):
+def evaluation(preds, data, steps=(-1,)):
     with open(preds, "rb") as file:
         model_preds = pickle.load(file)
 
@@ -84,12 +84,12 @@ def update_results(results, preds, data):
 outdir = "benchmark_results"
 
 for dataname in ["Synth", "ICU", "ADNI"]:
-    data = f"data/{dataname}_data.pkl"
+    data_ = f"data/{dataname}_data.pkl"
     benchmark = f"{outdir}/{dataname}_benchmark.csv"
-    results = pd.read_csv(benchmark, index_col=0)
+    results_ = pd.read_csv(benchmark, index_col=0)
 
     for model in ["ACTPC", "dcn_Seq2Seq"]:
-        preds = f"external/{model}/output/{dataname}_preds.pkl"
-        results = update_results(results, preds, data)
+        preds_ = f"external/{model}/output/{dataname}_preds.pkl"
+        results_ = update_results(results_, preds_, data_)
 
-    results.to_csv(f"{outdir}/{dataname}_benchmark_complete.csv")
+    results_.to_csv(f"{outdir}/{dataname}_benchmark_complete.csv")

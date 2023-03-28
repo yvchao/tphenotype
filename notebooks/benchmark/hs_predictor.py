@@ -2,29 +2,19 @@
 # coding: utf-8
 
 import itertools
-import json
 import os
 import pickle
 
 import numpy as np
 import pandas as pd
 import torch
-from benchmark import (
-    Cls_config,
-    Encoder_config,
-    KME2P_config,
-    Predictor_config,
-    benchmark,
-    loss_weights,
-)
+from benchmark import Cls_config, Encoder_config, Predictor_config, loss_weights
 from tqdm import auto
 
-from tphenotype import LaplaceEncoder, Predictor
-from tphenotype.baselines import E2P, KMDTW, KME2P
-from tphenotype.utils import get_auc_scores, get_cls_scores, select_by_steps
+from tphenotype import Predictor
 
 
-def evaluate_predictor(method, config, loss_weights, splits, seed=0, epochs=50):
+def evaluate_predictor(method, config, loss_weights_, splits, seed=0, epochs=50):
     results = []
     for i, dataset in auto.tqdm(enumerate(splits), total=len(splits), desc=f"{method.__name__}"):
         train_set, valid_set, test_set = dataset
@@ -33,16 +23,14 @@ def evaluate_predictor(method, config, loss_weights, splits, seed=0, epochs=50):
         torch.use_deterministic_algorithms(True)
         model = method(**config)
         roc = model.evaluate_predictor_params(
-            train_set, test_set, loss_weights, valid_set=valid_set, epochs=epochs, verbose=False
+            train_set, test_set, loss_weights_, valid_set=valid_set, epochs=epochs, verbose=False
         )
         results.append(roc)
     results = np.array(results)
-    return results, model
+    return results, model  # pyright: ignore
 
 
 os.makedirs("hyperparam_selection", exist_ok=True)
-
-# In[5]:
 
 
 def load_data(dataname, verbose=False):
@@ -77,13 +65,10 @@ def load_data(dataname, verbose=False):
     return splits, feat_list, temporal_dims
 
 
-# In[7]:
-
-
-def hyperparam_selection_predictor(dataname, search_space, encoder_config, loss_weights, seed=0, epochs=50):
-    splits, feat_list, temporal_dims = load_data(dataname, verbose=True)
-    tr_set, va_set, te_set = splits[0]
-    _, T, x_dim = tr_set["x"].shape
+def hyperparam_selection_predictor(dataname, search_space, encoder_config, loss_weights_, seed=0, epochs=50):
+    splits, feat_list, temporal_dims = load_data(dataname, verbose=True)  # pylint: disable=unused-variable
+    tr_set, va_set, te_set = splits[0]  # pylint: disable=unused-variable
+    _, T, x_dim = tr_set["x"].shape  # pylint: disable=unused-variable
     _, _, y_dim = tr_set["y"].shape
 
     # Configuration
@@ -111,22 +96,29 @@ def hyperparam_selection_predictor(dataname, search_space, encoder_config, loss_
             continue
 
         test_config = predictor_config.copy()
-        test_loss_weights = loss_weights.copy()
+        test_loss_weights = loss_weights_.copy()
         msg = []
-        for j, k in enumerate(search_space.keys()):
-            if k in predictor_config:
-                test_config[k] = comb[j]
-            elif k in loss_weights:
-                test_loss_weights[k] = comb[j]
-            msg.append(f"{k}:{comb[j]}")
+        for j, k_ in enumerate(search_space.keys()):
+            if k_ in predictor_config:
+                test_config[k_] = comb[j]
+            elif k_ in loss_weights_:
+                test_loss_weights[k_] = comb[j]
+            msg.append(f"{k_}:{comb[j]}")
 
         msg = ",".join(msg)
         print(f"test config {msg} ...")
         print("loss config:")
         print(test_loss_weights)
-        results, model = evaluate_predictor(Predictor, test_config, test_loss_weights, splits, seed=seed, epochs=epochs)
-        scores.loc[i, "roc_mean"] = np.mean(results)
-        scores.loc[i, "roc_std"] = np.std(results)
+        results, model = evaluate_predictor(  # pylint: disable=unused-variable
+            Predictor,
+            test_config,
+            test_loss_weights,
+            splits,
+            seed=seed,
+            epochs=epochs,
+        )
+        scores.loc[i, "roc_mean"] = np.mean(results)  # pyright: ignore
+        scores.loc[i, "roc_std"] = np.std(results)  # pyright: ignore
         scores.loc[i, "config"] = msg
         scores.to_csv(result_file)
 
@@ -137,10 +129,6 @@ def hyperparam_selection_predictor(dataname, search_space, encoder_config, loss_
     print(scores.loc[best, "config"])
 
 
-# In[8]:
-# In[4]:
-
-
 def read_config(config_str):
     config = {}
     for item in config_str.split(","):
@@ -149,29 +137,27 @@ def read_config(config_str):
     return config
 
 
-search_space = {
+search_space_ = {
     "hidden_size": [5, 10],
     "num_layer": [2, 3, 4],
 }
 
-for dataname in ["Synth", "ICU", "ADNI"]:
-    result_file = f"hyperparam_selection/{dataname}_encoder.csv"
-    scores = pd.read_csv(result_file, index_col=0)
-    scores = scores.astype({"mse_mean": "float"})
-    best = scores["mse_mean"].idxmin()
+for dataname_ in ["Synth", "ICU", "ADNI"]:
+    result_file_ = f"hyperparam_selection/{dataname_}_encoder.csv"
+    scores_ = pd.read_csv(result_file_, index_col=0)
+    scores_ = scores_.astype({"mse_mean": "float"})
+    best_ = scores_["mse_mean"].idxmin()
 
-    test_loss_weights = loss_weights.copy()
-    encoder_config = Encoder_config.copy()
+    test_loss_weights_ = loss_weights.copy()
+    encoder_config_ = Encoder_config.copy()
 
-    config = read_config(scores.loc[best, "config"])
-    for k, v in config.items():
-        if k in test_loss_weights:
-            default_v = test_loss_weights[k]
-            test_loss_weights[k] = type(default_v)(v)
-        if k in encoder_config:
-            default_v = encoder_config[k]
-            encoder_config[k] = type(default_v)(v)
+    config_ = read_config(scores_.loc[best_, "config"])
+    for k, v in config_.items():
+        if k in test_loss_weights_:
+            default_v = test_loss_weights_[k]
+            test_loss_weights_[k] = type(default_v)(v)
+        if k in encoder_config_:
+            default_v = encoder_config_[k]
+            encoder_config_[k] = type(default_v)(v)
 
-    hyperparam_selection_predictor(dataname, search_space, encoder_config, test_loss_weights)
-
-# In[ ]:
+    hyperparam_selection_predictor(dataname_, search_space_, encoder_config_, test_loss_weights_)

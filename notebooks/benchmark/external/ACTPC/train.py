@@ -1,40 +1,34 @@
+# pylint: disable=unspecified-encoding,pointless-string-statement
+
+import argparse
 import copy
 import os
+import pickle
 import random
-import sys
 
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
-
-fd = os.open("/dev/null", os.O_WRONLY)
-os.dup2(fd, 2)
-
-# In[2]:
-import argparse
-
-import pickle5 as pickle
 import tensorflow as tf
 
 # user defined
-import utils_network as utils
 from class_model_v7 import DeepTPC_ICLR
 
 # performance metrics
-from sklearn.cluster import KMeans, MiniBatchKMeans
+from sklearn.cluster import KMeans
 from sklearn.metrics import (
     adjusted_rand_score,
     average_precision_score,
-    homogeneity_score,
     normalized_mutual_info_score,
     roc_auc_score,
 )
 from sklearn.metrics.cluster import contingency_matrix
-from sklearn.model_selection import train_test_split
-from tensorflow.python.ops.rnn import _transpose_batch_time
+
+# fd = os.open("/dev/null", os.O_WRONLY)
+# os.dup2(fd, 2)
 
 
-### PARAMETER LOGGING
+# -- PARAMETER LOGGING
 def save_logging(dictionary, log_name):
     with open(log_name, "w") as f:
         for key, value in dictionary.items():
@@ -45,12 +39,12 @@ def save_logging(dictionary, log_name):
 
 
 def load_logging(filename):
-    data = dict()
+    data_ = dict()
     with open(filename) as f:
 
-        def is_float(input):
+        def is_float(input_):
             try:
-                num = float(input)
+                _ = float(input_)
             except ValueError:
                 return False
             return True
@@ -68,22 +62,19 @@ def load_logging(filename):
                         value = tf.nn.tanh
                     else:
                         raise ValueError("ERROR: wrong choice of activation function!")
-                    data[key] = value
+                    data_[key] = value
                 else:
                     if value.isdigit():
-                        data[key] = int(value)
+                        data_[key] = int(value)
                     elif is_float(value):
-                        data[key] = float(value)
+                        data_[key] = float(value)
                     elif value == "None":
-                        data[key] = None
+                        data_[key] = None
                     else:
-                        data[key] = value
+                        data_[key] = value
             else:
                 pass  # deal with bad lines of text here
-    return data
-
-
-# In[5]:
+    return data_
 
 
 def log(x):
@@ -101,17 +92,17 @@ def get_seq_length(sequence):
     return tmp_length
 
 
-def f_get_minibatch(mb_size, x, y):
+def f_get_minibatch(mb_size_, x, y):
     idx = range(np.shape(x)[0])
-    idx = random.sample(idx, mb_size)
+    idx = random.sample(idx, mb_size_)
 
-    x_mb = x[idx].astype(float)
-    y_mb = y[idx].astype(float)
+    x_mb_ = x[idx].astype(float)
+    y_mb_ = y[idx].astype(float)
 
-    return x_mb, y_mb
+    return x_mb_, y_mb_
 
 
-### PERFORMANCE METRICS:
+# -- PERFORMANCE METRICS:
 def f_get_prediction_scores(y_true_, y_pred_):
     if np.sum(y_true_) == 0:  # no label for running roc_auc_curves
         auroc_ = -1.0
@@ -122,18 +113,18 @@ def f_get_prediction_scores(y_true_, y_pred_):
     return (auroc_, auprc_)
 
 
-def purity_score(y_true, y_pred):
+def purity_score(y_true_, y_pred_):
     # compute contingency matrix (also called confusion matrix)
-    c_matrix = contingency_matrix(y_true, y_pred)
+    c_matrix = contingency_matrix(y_true_, y_pred_)
     # return purity
-    return np.sum(np.amax(c_matrix, axis=0)) / np.sum(c_matrix)
+    return np.sum(np.amax(c_matrix, axis=0)) / np.sum(c_matrix)  # pyright: ignore
 
 
-def set_random_seed(seed):
-    os.environ["PYTHONHASHSEED"] = str(seed)
-    random.seed(seed)
-    np.random.seed(seed)
-    tf.set_random_seed(seed)
+def set_random_seed(seed_):
+    os.environ["PYTHONHASHSEED"] = str(seed_)
+    random.seed(seed_)
+    np.random.seed(seed_)
+    tf.set_random_seed(seed_)
 
 
 if __name__ == "__main__":
@@ -181,8 +172,6 @@ if __name__ == "__main__":
 
     rnn_type = "LSTM"  # GRU, LSTM
 
-    # In[10]:
-
     input_dims = {"x_dim": x_dim, "y_dim": y_dim, "y_type": y_type, "max_cluster": K, "max_length": max_length}
 
     network_settings = {
@@ -197,13 +186,10 @@ if __name__ == "__main__":
         "fc_activate_fn": tf.nn.relu,
     }
 
-    # In[11]:
-
     RESULT_NMI = np.zeros([OUT_ITERATION, 1])
     RESULT_RI = np.zeros([OUT_ITERATION, 1])
     RESULT_PURITY = np.zeros([OUT_ITERATION, 1])
 
-    # In[12]:
     tf.reset_default_graph()
 
     # Turn on xla optimization
@@ -228,14 +214,14 @@ if __name__ == "__main__":
         dataset = splits[out_itr]
         dataset = copy.deepcopy(dataset)
         for subset in dataset:
-            x = subset["x"]
+            x_ = subset["x"]
             t = subset["t"]
             m = subset["range_mask"]
             delta_t = np.zeros((*t.shape, 1))
             delta_t[:, 1:, 0] = t[:, 1:] - t[:, :-1]
             delta_t[m == 0] = 0
-            x = np.concatenate([delta_t, x], axis=-1)
-            subset["x"] = x
+            x_ = np.concatenate([delta_t, x_], axis=-1)
+            subset["x"] = x_
 
         train_set, valid_set, test_set = dataset
 
@@ -299,7 +285,7 @@ if __name__ == "__main__":
         print(AUROC)
         print(AUPRC)
 
-    print("Start trainig AC-TPC")
+    print("Start training AC-TPC")
 
     for out_itr in range(OUT_ITERATION):
         print("======= K: {}   OUT_ITERATION: {} ======".format(K, out_itr))
@@ -309,14 +295,14 @@ if __name__ == "__main__":
         dataset = copy.deepcopy(dataset)
 
         for subset in dataset:
-            x = subset["x"]
+            x_ = subset["x"]
             t = subset["t"]
             m = subset["range_mask"]
             delta_t = np.zeros((*t.shape, 1))
             delta_t[:, 1:, 0] = t[:, 1:] - t[:, :-1]
             delta_t[m == 0] = 0
-            x = np.concatenate([delta_t, x], axis=-1)
-            subset["x"] = x
+            x_ = np.concatenate([delta_t, x_], axis=-1)
+            subset["x"] = x_
 
         train_set, valid_set, test_set = dataset
 
@@ -345,11 +331,9 @@ if __name__ == "__main__":
 
         saver.restore(sess, load_path + "models/model_v7_K{}".format(K))
 
-        # ### INITIALIZE EMBEDDING AND SELECTOR
+        # # -- INITIALIZE EMBEDDING AND SELECTOR
 
-        # In[21]:
-
-        def initialize_embedding(model_, x_, K_):
+        def initialize_embedding(model_, x__, K_):
             #         tmp_z, _, tmp_m = model_.predict_zs_and_pis_m2(x_)
             #         # tmp_z, _, tmp_m = model_.predict_zs_and_pis_m1(x_)
 
@@ -366,27 +350,25 @@ if __name__ == "__main__":
             #         for k in range(K_):
             #             tmp_e[k, :] = np.mean(tmp_z[tmp_s == k])
 
-            tmp_z, _, _ = model_.predict_zs_and_pis_m2(x_)
-            tmp_y, tmp_m = model.predict_y_hats(x_)
+            tmp_z_, _, _ = model_.predict_zs_and_pis_m2(x__)
+            tmp_y_, tmp_m_ = model.predict_y_hats(x__)
 
-            tmp_z = (tmp_z * np.tile(np.expand_dims(tmp_m, axis=2), [1, 1, z_dim])).reshape([-1, z_dim])
-            tmp_z = tmp_z[np.sum(np.abs(tmp_z), axis=1) != 0]
+            tmp_z_ = (tmp_z_ * np.tile(np.expand_dims(tmp_m_, axis=2), [1, 1, z_dim])).reshape([-1, z_dim])
+            tmp_z_ = tmp_z_[np.sum(np.abs(tmp_z_), axis=1) != 0]
 
-            tmp_y = (tmp_y * np.tile(np.expand_dims(tmp_m, axis=2), [1, 1, y_dim])).reshape([-1, y_dim])
-            tmp_y = tmp_y[np.sum(np.abs(tmp_y), axis=1) != 0]
+            tmp_y_ = (tmp_y_ * np.tile(np.expand_dims(tmp_m_, axis=2), [1, 1, y_dim])).reshape([-1, y_dim])
+            tmp_y_ = tmp_y_[np.sum(np.abs(tmp_y_), axis=1) != 0]
 
             km = KMeans(n_clusters=K_, init="k-means++", random_state=seed)
-            _ = km.fit(tmp_y)
+            _ = km.fit(tmp_y_)
             tmp_ey = km.cluster_centers_
-            tmp_s = km.predict(tmp_y)
+            tmp_s = km.predict(tmp_y_)
 
             tmp_e = np.zeros([K_, z_dim])
-            for k in range(K_):
-                tmp_e[k, :] = tmp_z[np.argmin(np.sum(np.abs(tmp_y - tmp_ey[k, :]), axis=1)), :]
+            for k_ in range(K_):
+                tmp_e[k_, :] = tmp_z_[np.argmin(np.sum(np.abs(tmp_y_ - tmp_ey[k_, :]), axis=1)), :]
 
-            return tmp_e, tmp_s, tmp_z
-
-        # In[22]:
+            return tmp_e, tmp_s, tmp_z_
 
         mb_size = 128
         M = int(tr_data_x.shape[0] / mb_size)  # for main algorithm
@@ -395,8 +377,6 @@ if __name__ == "__main__":
         lr_rate2 = 1e-3
 
         c_idx = 0  # selected index to keep track of embeddings...
-
-        # In[23]:
 
         print("=============================================")
         print("===== INITIALIZING EMBEDDING & SELECTOR =====")
@@ -422,9 +402,7 @@ if __name__ == "__main__":
         # print( np.round(tmp_ybars[:,c_idx], 2) )
         print("=============================================")
 
-        # In[100]:
-
-        # # check selector outputs and intialized classes
+        # # check selector outputs and initialized classes
         # pred_y, tmp_m = model.predict_s_sample(tr_data_x)
 
         # pred_y = pred_y.reshape([-1, 1])[tmp_m.reshape([-1]) == 1]
@@ -435,7 +413,6 @@ if __name__ == "__main__":
         # plt.show()
         # plt.close()
 
-        # In[24]:
         """
             L1: predictive clustering loss
             L2: prediction loss
@@ -445,7 +422,7 @@ if __name__ == "__main__":
             L_A = L1 + alpha * L3 + gamma * L4
             L_C = L1 + beta * L2
 
-            ### to map with the paper (set gamma=0, beta=0)
+            # -- to map with the paper (set gamma=0, beta=0)
             L_A = L1 + alpha * L3
             L_C = L1 + delta * L2
         """
@@ -532,8 +509,6 @@ if __name__ == "__main__":
         save_logging(network_settings, save_path + "models/network_settings_v7_K{}.txt".format(K))
         np.savez(save_path + "models/embeddings.npz", e=e)
 
-        # In[29]:
-
         _, tmp_pi, tmp_m = model.predict_zbars_and_pis_m2(te_data_x)
 
         tmp_pi = tmp_pi.reshape([-1, K])[tmp_m.reshape([-1]) == 1]
@@ -548,9 +523,7 @@ if __name__ == "__main__":
         plt.savefig(save_path + "results/figure_clustering_assignments.png")
         plt.close()
 
-        # In[147]:
-
-        # check selector outputs and intialized classes
+        # check selector outputs and initialized classes
         # pred_y, tmp_m = model.predict_s_sample(tr_data_x)
 
         # pred_y = pred_y.reshape([-1, 1])[tmp_m.reshape([-1]) == 1]
@@ -560,8 +533,6 @@ if __name__ == "__main__":
         # plt.show()
         # plt.savefig(save_path + 'results/figure_clustering_hist.png')
         # plt.close()
-
-        # In[30]:
 
         tmp_y, tmp_m = model.predict_y_bars(te_data_x)
 
@@ -577,8 +548,6 @@ if __name__ == "__main__":
 
         print("ITR{} - K{} | Cluster - ROC:{:.4f}, PRC:{:.4f}".format(out_itr, K, np.mean(AUROC), np.mean(AUPRC)))
 
-        # In[137]:
-
         tmp_y, tmp_m = model.predict_y_hats(te_data_x)
 
         y_pred = tmp_y.reshape([-1, y_dim])[tmp_m.reshape([-1]) == 1]
@@ -592,8 +561,6 @@ if __name__ == "__main__":
             AUPRC[y_idx] = auprc
 
         print("ITR{} - K{} | Predictor - ROC:{:.4f}, PRC:{:.4f}".format(out_itr, K, np.mean(AUROC), np.mean(AUPRC)))
-
-        # In[31]:
 
         pred_y, tmp_m = model.predict_s_sample(te_data_x)
 
@@ -618,8 +585,6 @@ if __name__ == "__main__":
         RESULT_RI[out_itr, 0] = tmp_ri
         RESULT_PURITY[out_itr, 0] = tmp_purity
         # homogeneity_score(true_y, pred_y)
-
-    # In[139]:
 
     pd.DataFrame(RESULT_NMI, columns=["NMI"], index=["itr" + str(out_itr) for out_itr in range(OUT_ITERATION)]).to_csv(
         "./{}/proposed/K{}/".format(data_mode, K) + "results_nmi.csv"

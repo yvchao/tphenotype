@@ -33,8 +33,8 @@ for dataname in ["Synth", "ICU", "ADNI"]:
 
     config_K = read_config(scores.loc[best, "config"])
 
-    config = {**config_encoders, **config_predictor, **config_K}
+    config_ = {**config_encoders, **config_predictor, **config_K}
     print(f"Dataset {dataname}")
     print("optimal hyperparameters:")
-    print(config)
+    print(config_)
     print("\n")

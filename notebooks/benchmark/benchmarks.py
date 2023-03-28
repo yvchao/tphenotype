@@ -1,8 +1,6 @@
 #!/usr/bin/env python
 # coding: utf-8
 
-import itertools
-import json
 import os
 import pickle
 
@@ -14,22 +12,20 @@ from benchmark import (
     Encoder_config,
     KME2P_config,
     Predictor_config,
-    benchmark,
     evaluate,
     loss_weights,
 )
 from tqdm import auto
 
-from tphenotype import JointPredictor, LaplaceEncoder, Predictor
-from tphenotype.baselines import E2P, KMDTW, KME2P, KMLaplace, SpectralDTW
-from tphenotype.utils import get_auc_scores, get_cls_scores, select_by_steps
+from tphenotype import JointPredictor, Predictor
+from tphenotype.baselines import KMDTW, KME2P, KMLaplace, SpectralDTW
 
 output_dir = "benchmark_results"
 os.makedirs(output_dir, exist_ok=True)
 
 
-def benchmark(method, config, splits, loss_weights, steps=[-1], epochs=50, seed=0, **kwargs):
-    dtype = "float32"
+def benchmark(method, config, splits, loss_weights_, steps=(-1,), epochs=50, seed=0, **kwargs):
+    dtype = "float32"  # noqa F841 # pylint: disable=unused-variable
     dataname = kwargs.get("dataname", None)
 
     results = []
@@ -47,7 +43,7 @@ def benchmark(method, config, splits, loss_weights, steps=[-1], epochs=50, seed=
             model = model.load(model_path)
         else:
             os.makedirs(save_dir, exist_ok=True)
-            model = model.fit(train_set, loss_weights, valid_set=valid_set, epochs=epochs, verbose=False)
+            model = model.fit(train_set, loss_weights_, valid_set=valid_set, epochs=epochs, verbose=False)
             model.save(save_dir, model_name)
 
         scores = evaluate(model, test_set, steps)
@@ -100,9 +96,6 @@ def load_data(dataname, verbose=False):
     return splits, feat_list, temporal_dims
 
 
-# In[7]:
-
-
 def run_benchmark(dataname, splits, setup_list, seed=0, epochs=50):
     result_file = f"{output_dir}/{dataname}_benchmark.csv"
     if os.path.exists(result_file):
@@ -111,12 +104,12 @@ def run_benchmark(dataname, splits, setup_list, seed=0, epochs=50):
         existing_df = pd.DataFrame(columns=["method"])
     results = []
     epochs = 50
-    for model, config, loss_weights in auto.tqdm(setup_list, desc="setups"):
+    for model, config, loss_weights_ in auto.tqdm(setup_list, desc="setups"):
         model_name = model(**config).name
         if (existing_df["method"] == model_name).any():
             print(f"benchmark is already done for {model_name}, skipping")
             continue
-        result = benchmark(model, config, splits, loss_weights, seed=seed, epochs=epochs, dataname=dataname)
+        result = benchmark(model, config, splits, loss_weights_, seed=seed, epochs=epochs, dataname=dataname)
         results.append(result)
         results_df = pd.DataFrame(results)
         results_df = pd.concat([existing_df, results_df], axis=0)
@@ -137,9 +130,9 @@ def read_config(config_str):
 
 
 def prepare_benchmark(dataname):
-    splits, feat_list, temporal_dims = load_data(dataname, verbose=True)
-    tr_set, va_set, te_set = splits[0]
-    _, T, x_dim = tr_set["x"].shape
+    splits, feat_list, temporal_dims = load_data(dataname, verbose=True)  # pylint: disable=unused-variable
+    tr_set, va_set, te_set = splits[0]  # pylint: disable=unused-variable
+    _, T, x_dim = tr_set["x"].shape  # pylint: disable=unused-variable
     _, _, y_dim = tr_set["y"].shape
 
     result_file = f"hyperparam_selection/{dataname}_encoder.csv"
@@ -241,6 +234,6 @@ def prepare_benchmark(dataname):
 
 
 if __name__ == "__main__":
-    for dataname in ["Synth", "ICU", "ADNI"]:
-        splits, setup_list = prepare_benchmark(dataname)
-        run_benchmark(dataname, splits, setup_list)
+    for dataname_ in ["Synth", "ICU", "ADNI"]:
+        splits_, setup_list_ = prepare_benchmark(dataname_)
+        run_benchmark(dataname_, splits_, setup_list_)

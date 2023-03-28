@@ -1,19 +1,11 @@
-_EPSILON = 1e-08
+# pylint: disable=pointless-string-statement
 
-import os
-import random
-import sys
-
-import matplotlib.pyplot as plt
 import numpy as np
-import pandas as pd
 import tensorflow as tf
 import utils_network as utils
-from sklearn.model_selection import train_test_split
-from tensorflow.contrib.layers import fully_connected as FC_Net
-from tensorflow.python.ops.rnn import _transpose_batch_time
+from tensorflow.python.ops.rnn import _transpose_batch_time  # pyright: ignore
 
-##### USER-DEFINED FUNCTIONS
+# --- USER-DEFINED FUNCTIONS
 
 
 def log(x):
@@ -60,7 +52,7 @@ class DCN_Seq2Seq:
 
     def _build_net(self):
         with tf.variable_scope(self.name):
-            #### PLACEHOLDER DECLARATION
+            # --- PLACEHOLDER DECLARATION
             self.mb_size = tf.placeholder(tf.int32, [], name="batch_size")
 
             self.lr_rate = tf.placeholder(tf.float32)
@@ -84,7 +76,7 @@ class DCN_Seq2Seq:
             self.a_delta = tf.placeholder(tf.float32, name="alpha_delta")
 
             inputs = self.x  # delta + feature
-            #             inputs = tf.concat([self.x,self.y_onehot], axis=2, name='inputs') #delta + feature + label
+            #  inputs = tf.concat([self.x,self.y_onehot], axis=2, name='inputs') #delta + feature + label
             """
                 ##### CREATE MASK
                     - rnn_mask_age, rnn_mask_static, rnn_mask_delta, rnn_mask_timevarying
@@ -112,7 +104,7 @@ class DCN_Seq2Seq:
             with tf.variable_scope("Encoder"):
                 initial_state = enc_cell.zero_state(self.mb_size, tf.float32)
 
-                encoder_outputs, last_enc_state = tf.nn.dynamic_rnn(
+                encoder_outputs, last_enc_state = tf.nn.dynamic_rnn(  # pylint: disable=unused-variable
                     enc_cell, inputs=inputs, initial_state=initial_state, dtype=tf.float32
                 )
 
@@ -123,7 +115,7 @@ class DCN_Seq2Seq:
 
                 output_ta = tf.TensorArray(size=self.max_length, dtype=tf.float32, clear_after_read=False)
 
-                #                 output_ta = tf.TensorArray(size=self.mb_size, dtype=tf.float32)
+                # output_ta = tf.TensorArray(size=self.mb_size, dtype=tf.float32)
 
                 def get_logits(tmp_h, reuse=tf.AUTO_REUSE):
                     with tf.variable_scope("Logit_Function", reuse=reuse):
@@ -131,51 +123,63 @@ class DCN_Seq2Seq:
                             if e == 0:
                                 h_delta = tmp_h
                             h_delta = tf.contrib.layers.fully_connected(
-                                inputs=h_delta, num_outputs=self.h_dim_g, activation_fn=self.fc_activate_fn
+                                inputs=h_delta,  # pyright: ignore
+                                num_outputs=self.h_dim_g,
+                                activation_fn=self.fc_activate_fn,
                             )
                         h_delta = tf.contrib.layers.fully_connected(
-                            inputs=h_delta, num_outputs=1, activation_fn=tf.nn.softplus
+                            inputs=h_delta,  # pyright: ignore
+                            num_outputs=1,
+                            activation_fn=tf.nn.softplus,
                         )
 
                         for e in range(self.num_layers_g):
                             if e == 0:
                                 h_x = tmp_h
                             h_x = tf.contrib.layers.fully_connected(
-                                inputs=h_x, num_outputs=self.h_dim_g, activation_fn=self.fc_activate_fn
+                                inputs=h_x,  # pyright: ignore
+                                num_outputs=self.h_dim_g,
+                                activation_fn=self.fc_activate_fn,
                             )
                         h_x = tf.contrib.layers.fully_connected(
-                            inputs=h_x, num_outputs=self.x_dim - 1, activation_fn=None
+                            inputs=h_x,  # pyright: ignore
+                            num_outputs=self.x_dim - 1,
+                            activation_fn=None,
                         )
 
                         for e in range(self.num_layers_g):
                             if e == 0:
                                 h_y = tmp_h
                             h_y = tf.contrib.layers.fully_connected(
-                                inputs=h_y, num_outputs=self.h_dim_g, activation_fn=self.fc_activate_fn
+                                inputs=h_y,  # pyright: ignore
+                                num_outputs=self.h_dim_g,
+                                activation_fn=self.fc_activate_fn,
                             )
                         h_y = tf.contrib.layers.fully_connected(
-                            inputs=h_y, num_outputs=self.y_dim, activation_fn=tf.nn.softmax
+                            inputs=h_y,  # pyright: ignore
+                            num_outputs=self.y_dim,
+                            activation_fn=tf.nn.softmax,
                         )
 
-                        #                     return tf.concat([h_delta, h_x, h_y], axis=1)
+                        # return tf.concat([h_delta, h_x, h_y], axis=1)
                         return h_delta, h_x, h_y
 
-                #                 def get_sample(tmp_output):
-                #                     for e in range(self.num_layers_g):
-                #                         if e == 0:
-                #                             h = tmp_output
-                #                         h = tf.contrib.layers.fully_connected(inputs=h, num_outputs=self.h_dim_g, activation_fn=self.fc_activate_fn)
+                # def get_sample(tmp_output):
+                #     for e in range(self.num_layers_g):
+                #         if e == 0:
+                #             h = tmp_output
+                #         h = tf.contrib.layers.fully_connected(inputs=h, num_outputs=self.h_dim_g, activation_fn=self.fc_activate_fn)
 
-                #                     h_delta    = tf.contrib.layers.fully_connected(inputs=h, num_outputs=1, activation_fn=tf.nn.softplus)
-                #                     h_x        = tf.contrib.layers.fully_connected(inputs=h, num_outputs=self.x_dim-1, activation_fn=None)
-                #                     h_y        = tf.contrib.layers.fully_connected(inputs=h, num_outputs=self.y_dim, activation_fn=tf.nn.softmax)
+                #     h_delta    = tf.contrib.layers.fully_connected(inputs=h, num_outputs=1, activation_fn=tf.nn.softplus)
+                #     h_x        = tf.contrib.layers.fully_connected(inputs=h, num_outputs=self.x_dim-1, activation_fn=None)
+                #     h_y        = tf.contrib.layers.fully_connected(inputs=h, num_outputs=self.y_dim, activation_fn=tf.nn.softmax)
 
-                #                     dist_y     = tf.contrib.distributions.Categorical(probs=h_y, dtype=tf.int32)
-                #                     sample_y   = dist_y.sample()
+                #     dist_y     = tf.contrib.distributions.Categorical(probs=h_y, dtype=tf.int32)
+                #     sample_y   = dist_y.sample()
 
-                #                     y_sampled  = tf.one_hot(sample_y, self.y_dim)
+                #     y_sampled  = tf.one_hot(sample_y, self.y_dim)
 
-                #                     return tf.concat([h_delta, h_x, y_sampled], axis=1)
+                #     return tf.concat([h_delta, h_x, y_sampled], axis=1)
 
                 def loop_fn(time, cell_output, cell_state, loop_state):
                     emit_output = cell_output  # == None for time == 0
@@ -196,7 +200,7 @@ class DCN_Seq2Seq:
 
                         next_sampled_input = tf.concat([tmp_d, tmp_x, tmp_y], axis=1)
 
-                        #                         next_sampled_input = get_sample(cell_output)  # sampling from multinomial
+                        # next_sampled_input = get_sample(cell_output)  # sampling from multinomial
                         next_loop_state = loop_state.write(time - 1, tf.concat([tmp_d, tmp_x, tmp_y_logits], axis=1))
 
                     elements_finished = time >= self.max_length
@@ -208,12 +212,12 @@ class DCN_Seq2Seq:
                         lambda: next_sampled_input,
                     )
 
-                    #                     next_input = next_sampled_input
-                    #                     next_input = FC_Net(inputs=next_sampled_input, num_outputs=self.h_dim2, activation_fn=tf.nn.relu)
+                    # next_input = next_sampled_input
+                    # next_input = FC_Net(inputs=next_sampled_input, num_outputs=self.h_dim2, activation_fn=tf.nn.relu)
 
                     return (elements_finished, next_input, next_cell_state, emit_output, next_loop_state)
 
-                decoder_emit_ta, _, loop_state_ta = tf.nn.raw_rnn(dec_cell, loop_fn)
+                decoder_emit_ta, _, loop_state_ta = tf.nn.raw_rnn(dec_cell, loop_fn)  # pylint: disable=unused-variable
 
             self.Z = utils.create_concat_state_h(last_enc_state, self.num_layers_f, self.rnn_type)
 
@@ -228,9 +232,9 @@ class DCN_Seq2Seq:
             self.inputs_x = tf.reshape(inputs[:, :, 1 : self.x_dim], [-1, self.max_length, (self.x_dim - 1)])
 
             self.outputs_y = tf.reshape(outputs[:, :, self.x_dim :], [-1, self.max_length, self.y_dim])
-            #             self.inputs_y       = tf.reshape(inputs[:, :, self.x_dim:], [-1, self.max_length, self.y_dim])
+            # self.inputs_y = tf.reshape(inputs[:, :, self.x_dim:], [-1, self.max_length, self.y_dim])
 
-            ### RECONSTRUCTION LOSS
+            # -- RECONSTRUCTION LOSS
 
             loss_delta = tf.reduce_mean(
                 tf.reduce_sum(
@@ -246,7 +250,7 @@ class DCN_Seq2Seq:
 
             self.LOSS_AE = self.a_delta * loss_delta + loss_x + loss_y
 
-            ### CLUSTER LOSS
+            # -- CLUSTER LOSS
             Z_expanded = tf.tile(tf.expand_dims(self.Z, axis=1), [1, self.K, 1])  # [None, num_Cluster, 2]
             MU_expanded = tf.tile(tf.expand_dims(self.E, axis=0), [self.mb_size, 1, 1])  # [None, num_Cluster, 2]
             dist_z_expanded = tf.reduce_sum((Z_expanded - MU_expanded) ** 2, axis=2)  # [None, num_Cluster]

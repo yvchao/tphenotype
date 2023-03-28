@@ -1,39 +1,22 @@
 # coding: utf-8
-
-# In[ ]:
-
-_EPSILON = 1e-08
+# pylint: disable=unspecified-encoding
 
 import os
 import random
 import sys
 
-import matplotlib.pyplot as plt
 import numpy as np
-import pandas as pd
 import tensorflow as tf
 from class_Seq2Seq import DCN_Seq2Seq
 
 # performance metrics
-from sklearn.cluster import KMeans, MiniBatchKMeans
-from sklearn.metrics import (
-    adjusted_rand_score,
-    average_precision_score,
-    homogeneity_score,
-    normalized_mutual_info_score,
-    roc_auc_score,
-)
+from sklearn.metrics import average_precision_score, roc_auc_score
 from sklearn.metrics.cluster import contingency_matrix
 from sklearn.model_selection import train_test_split
-from tensorflow.contrib.layers import fully_connected as FC_Net
-from tensorflow.python.ops.rnn import _transpose_batch_time
 
 sys.path.append("../..")
-import utils_network as utils
 
-# In[ ]:
-
-data_mode = "ADNI"  #'CF_comorbidity_select'
+data_mode = "ADNI"  # 'CF_comorbidity_select'
 
 # IMPORT DATASET
 if data_mode == "CF":
@@ -91,10 +74,9 @@ elif data_mode == "ADNI":
     data_y = npz["data_y"]
     feat_list = npz["feat_list"]
     label_list = npz["label_list"]
-# In[ ]:
 
 
-### PARAMETER LOGGING
+# -- PARAMETER LOGGING
 def save_logging(dictionary, log_name):
     with open(log_name, "w") as f:
         for key, value in dictionary.items():
@@ -108,9 +90,9 @@ def load_logging(filename):
     data = dict()
     with open(filename) as f:
 
-        def is_float(input):
+        def is_float(input_):
             try:
-                num = float(input)
+                _ = float(input_)
             except ValueError:
                 return False
             return True
@@ -143,9 +125,7 @@ def load_logging(filename):
     return data
 
 
-# In[ ]:
-
-##### USER-DEFINED FUNCTIONS
+# --- USER-DEFINED FUNCTIONS
 
 
 def log(x):
@@ -163,17 +143,14 @@ def get_seq_length(sequence):
     return tmp_length
 
 
-def f_get_minibatch(mb_size, x, y):
+def f_get_minibatch(mb_size_, x, y):
     idx = range(np.shape(x)[0])
-    idx = random.sample(idx, mb_size)
+    idx = random.sample(idx, mb_size_)
 
-    x_mb = x[idx, :, :].astype(float)
-    y_mb = y[idx, :, :].astype(float)
+    x_mb_ = x[idx, :, :].astype(float)
+    y_mb_ = y[idx, :, :].astype(float)
 
-    return x_mb, y_mb
-
-
-# In[ ]:
+    return x_mb_, y_mb_
 
 
 def f_get_prediction_scores(y_true_, y_pred_):
@@ -186,29 +163,27 @@ def f_get_prediction_scores(y_true_, y_pred_):
     return (auroc_, auprc_)
 
 
-def purity_score(y_true, y_pred):
+def purity_score(y_true_, y_pred_):
     # compute contingency matrix (also called confusion matrix)
-    c_matrix = contingency_matrix(y_true, y_pred)
+    c_matrix = contingency_matrix(y_true_, y_pred_)
     # return purity
-    return np.sum(np.amax(c_matrix, axis=0)) / np.sum(c_matrix)
+    return np.sum(np.amax(c_matrix, axis=0)) / np.sum(c_matrix)  # pyright: ignore
 
 
-# # INTIALIZATION
-
-# In[ ]:
+# --- INITIALIZATION
 
 h_dim_FC = 50  # for fully_connected layers
 h_dim_RNN = 50
 
-x_dim = np.shape(data_x)[2]
-y_dim = np.shape(data_y)[2]
+x_dim = np.shape(data_x)[2]  # pyright: ignore
+y_dim = np.shape(data_y)[2]  # pyright: ignore
 
 num_layer_encoder = 1
 num_layer_predictor = 2
 
 z_dim = h_dim_RNN * num_layer_encoder
 
-max_length = np.shape(data_x)[1]
+max_length = np.shape(data_x)[1]  # pyright: ignore
 
 rnn_type = "LSTM"  # GRU, LSTM
 
@@ -234,7 +209,7 @@ check_step = 100
 # for out_itr in [0,1,2,3,4]:
 for out_itr in [4]:
     tr_data_x, te_data_x, tr_data_y, te_data_y = train_test_split(
-        data_x, data_y, test_size=0.2, random_state=seed + out_itr
+        data_x, data_y, test_size=0.2, random_state=seed + out_itr  # pyright: ignore
     )
 
     tr_data_x, va_data_x, tr_data_y, va_data_y = train_test_split(
@@ -276,7 +251,7 @@ for out_itr in [4]:
             tmp_d, tmp_x, tmp_y, tmp_m = model.predict_outputs(va_data_x)
 
             y_pred = tmp_y.reshape([-1, y_dim])[tmp_m.reshape([-1]) == 1]
-            y_true = va_data_y.reshape([-1, y_dim])[tmp_m.reshape([-1]) == 1]
+            y_true = va_data_y.reshape([-1, y_dim])[tmp_m.reshape([-1]) == 1]  # pyright: ignore
 
             AUROC = np.zeros([y_dim])
             AUPRC = np.zeros([y_dim])
@@ -299,7 +274,7 @@ for out_itr in [4]:
     tmp_d, tmp_x, tmp_y, tmp_m = model.predict_outputs(te_data_x)
 
     y_pred = tmp_y.reshape([-1, y_dim])[tmp_m.reshape([-1]) == 1]
-    y_true = te_data_y.reshape([-1, y_dim])[tmp_m.reshape([-1]) == 1]
+    y_true = te_data_y.reshape([-1, y_dim])[tmp_m.reshape([-1]) == 1]  # pyright: ignore
 
     AUROC = np.zeros([y_dim])
     AUPRC = np.zeros([y_dim])

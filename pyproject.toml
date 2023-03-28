@@ -15,6 +15,11 @@ known_first_party = "tphenotype"
 profile = "black"
 src_paths = ["src"]
 
+[tool.pylint]
+disable = "R,C"
+generated-members = "tensorflow.*,torch.*"
+ignored-modules = "tensorflow.compat,tensorflow.keras,tensorflow.python.ops,scipy.special"
+
 [tool.pyright]
 exclude = [
   "**/node_modules",
@@ -36,8 +41,3 @@ column_limit = 120
 indent_width = 4
 spaces_before_comment = 4
 split_before_logical_operator = true
-
-[tool.pylint]
-generated-members="tensorflow.*,torch.*"
-disable="R,C"
-ignored-modules="tensorflow.compat,tensorflow.keras,tensorflow.python.ops,scipy.special"

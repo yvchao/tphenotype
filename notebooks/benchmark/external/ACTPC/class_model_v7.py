@@ -1,13 +1,11 @@
-import os
-import random
-import sys
+# pylint: disable=pointless-string-statement
 
 import numpy as np
 import tensorflow as tf
 
 # user defined
 import utils_network as utils
-from tensorflow.python.ops.rnn import _transpose_batch_time
+from tensorflow.python.ops.rnn import _transpose_batch_time  # pyright: ignore
 
 
 def log(x):
@@ -100,7 +98,7 @@ class DeepTPC_ICLR:
             # Only consider last available observation
             self.rnn_mask2 = self.rnn_mask1
 
-            ### DEFINE SELECTOR
+            # -- DEFINE SELECTOR
             def selector(
                 x_,
                 o_dim_=self.K,
@@ -123,21 +121,21 @@ class DeepTPC_ICLR:
                             if tmp_layer == 0:
                                 net = x_
                             net = tf.contrib.layers.fully_connected(
-                                inputs=net,
+                                inputs=net,  # pyright: ignore
                                 num_outputs=h_dim_,
                                 activation_fn=activation_fn,
                                 scope="selector_" + str(tmp_layer),
                             )
                             net = tf.nn.dropout(net, keep_prob=self.keep_prob)
                         out = tf.contrib.layers.fully_connected(
-                            inputs=net,
+                            inputs=net,  # pyright: ignore
                             num_outputs=o_dim_,
                             activation_fn=out_fn,
                             scope="selector_out",
                         )
                 return out
 
-            ### DEFINE PREDICTOR
+            # -- DEFINE PREDICTOR
             def predictor(
                 x_,
                 o_dim_=self.y_dim,
@@ -154,7 +152,7 @@ class DeepTPC_ICLR:
                 elif o_type_ == "binary":
                     out_fn = tf.nn.sigmoid
                 else:
-                    raise Exception("Wrong output type. The value {}!!".format(o_type_))
+                    raise TypeError("Wrong output type. The value {}!!".format(o_type_))
 
                 with tf.variable_scope("predictor", reuse=reuse):
                     if num_layers_ == 1:
@@ -169,21 +167,21 @@ class DeepTPC_ICLR:
                             if tmp_layer == 0:
                                 net = x_
                             net = tf.contrib.layers.fully_connected(
-                                inputs=net,
+                                inputs=net,  # pyright: ignore
                                 num_outputs=h_dim_,
                                 activation_fn=activation_fn,
                                 scope="predictor_" + str(tmp_layer),
                             )
                             net = tf.nn.dropout(net, keep_prob=self.keep_prob)
                         out = tf.contrib.layers.fully_connected(
-                            inputs=net,
+                            inputs=net,  # pyright: ignore
                             num_outputs=o_dim_,
                             activation_fn=out_fn,
                             scope="predictor_out",
                         )
                 return out
 
-            ### DEFINE LOOP FUNCTION FOR ENCODRER (f-g, f-h relations are created here)
+            # -- DEFINE LOOP FUNCTION FOR ENCODRER (f-g, f-h relations are created here)
             def loop_fn(time, cell_output, cell_state, loop_state):
                 emit_output = cell_output
 
@@ -267,7 +265,7 @@ class DeepTPC_ICLR:
             self.y_hats = _transpose_batch_time(loop_state_ta[1].stack())
             self.pis = _transpose_batch_time(loop_state_ta[2].stack())
 
-            ### SAMPLING PROCESS
+            # -- SAMPLING PROCESS
             s_dist = tf.distributions.Categorical(
                 probs=tf.reshape(self.pis, [-1, self.K])
             )  # define the categorical dist.
@@ -299,7 +297,7 @@ class DeepTPC_ICLR:
             self.pi_sample = tf.reshape(pi_sample, [-1, self.max_length])
             self.s_sample = tf.reshape(s_sample, [-1, self.max_length])
 
-            ### DEFINE LOSS FUNCTIONS
+            # -- DEFINE LOSS FUNCTIONS
             # \ell_{1}: KL divergence loss for regression and binary/categorical-classification task
             def loss_1(y_true_, y_pred_, y_type_=self.y_type):
                 if y_type_ == "continuous":
@@ -312,7 +310,7 @@ class DeepTPC_ICLR:
                         axis=-1,
                     )
                 else:
-                    raise Exception("Wrong output type. The value {}!!".format(y_type_))
+                    raise TypeError("Wrong output type. The value {}!!".format(y_type_))
                 return tmp_loss
 
             # batch-wise entropy
@@ -321,7 +319,7 @@ class DeepTPC_ICLR:
                 tf.reduce_sum(self.rnn_mask2, axis=1), axis=0, keepdims=True
             )
 
-            ## LOSS1: predictive clustering loss
+            # - LOSS1: predictive clustering loss
             self.LOSS_1 = tf.reduce_mean(
                 tf.reduce_sum(self.rnn_mask2 * loss_1(self.y, self.y_bars, self.y_type), axis=1)
             )
@@ -332,12 +330,12 @@ class DeepTPC_ICLR:
                 )
             )
 
-            ## LOSS2: prediction loss
+            # - LOSS2: prediction loss
             self.LOSS_2 = tf.reduce_mean(
                 tf.reduce_sum(self.rnn_mask2 * loss_1(self.y, self.y_hats, self.y_type), axis=1)
             )
 
-            ## LOSS3: sample-wise entropy
+            # - LOSS3: sample-wise entropy
             self.LOSS_3 = tf.reduce_mean(
                 -tf.reduce_sum(
                     self.rnn_mask2 * tf.reduce_sum(self.pis * log(self.pis), axis=2),
@@ -345,7 +343,7 @@ class DeepTPC_ICLR:
                 )
             )
 
-            ## LOSS4: average-wise entropy
+            # - LOSS4: average-wise entropy
             self.LOSS_4 = tf.reduce_sum(-mean_pis * log(mean_pis))
 
             predictor_vars = tf.get_collection(tf.GraphKeys.GLOBAL_VARIABLES, scope=self.name + "/rnn/predictor")
@@ -357,7 +355,7 @@ class DeepTPC_ICLR:
                 if vars_ not in predictor_vars + selecter_vars + embedding_vars
             ]
 
-            ### EMBEDDING TRAINING
+            # -- EMBEDDING TRAINING
             with tf.variable_scope("rnn", reuse=True):
                 Ey = predictor(
                     self.EE,
@@ -368,7 +366,7 @@ class DeepTPC_ICLR:
                     self.fc_activate_fn,
                 )
 
-            ## LOSS_Ey: prevent embedding from collapsing
+            # - LOSS_Ey: prevent embedding from collapsing
             self.LOSS_Ey = 0
             for i in range(self.K):
                 for j in range(i + 1, self.K):
@@ -376,7 +374,7 @@ class DeepTPC_ICLR:
                         (self.K) * (self.K - 1)
                     )  # negative because we want to increase this;
 
-            ### DEFINE OPTIMIZATION SOLVERS
+            # -- DEFINE OPTIMIZATION SOLVERS
             self.solver_MLE = tf.train.AdamOptimizer(self.lr_rate1).minimize(
                 self.LOSS_2, var_list=encoder_vars + predictor_vars
             )
@@ -392,7 +390,7 @@ class DeepTPC_ICLR:
                 self.LOSS_1 + self.delta * self.LOSS_Ey, var_list=embedding_vars
             )
 
-            ### INITIALIZE SELECTOR
+            # -- INITIALIZE SELECTOR
             self.zz = tf.placeholder(tf.float32, [None, self.z_dim])
             with tf.variable_scope("rnn", reuse=True):
                 self.yy = predictor(
@@ -411,11 +409,11 @@ class DeepTPC_ICLR:
                     self.fc_activate_fn,
                 )
 
-            ## LOSS_S: selector initialization (cross-entropy wrt initialized class)
+            # - LOSS_S: selector initialization (cross-entropy wrt initialized class)
             self.LOSS_S = tf.reduce_mean(-tf.reduce_sum(self.s_onehot * log(self.s_out), axis=1))
             self.solver_S = tf.train.AdamOptimizer(self.lr_rate1).minimize(self.LOSS_S, var_list=selecter_vars)
 
-    ### TRAINING FUNCTIONS
+    # -- TRAINING FUNCTIONS
     def train_mle(self, x_, y_, lr_train, k_prob):
         return self.sess.run(
             [self.solver_MLE, self.LOSS_2],
@@ -479,7 +477,7 @@ class DeepTPC_ICLR:
             },
         )
 
-    ### PREDICTION FUNCTIONS
+    # -- PREDICTION FUNCTIONS
     def predict_y_hats(self, x_):
         return self.sess.run(
             [self.y_hats, self.rnn_mask2],

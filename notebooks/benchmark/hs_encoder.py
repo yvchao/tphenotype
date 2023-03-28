@@ -2,29 +2,19 @@
 # coding: utf-8
 
 import itertools
-import json
 import os
 import pickle
 
 import numpy as np
 import pandas as pd
 import torch
-from benchmark import (
-    Cls_config,
-    Encoder_config,
-    KME2P_config,
-    Predictor_config,
-    benchmark,
-    loss_weights,
-)
+from benchmark import Cls_config, Encoder_config, Predictor_config, loss_weights
 from tqdm import auto
 
-from tphenotype import LaplaceEncoder, Predictor
-from tphenotype.baselines import E2P, KMDTW, KME2P
-from tphenotype.utils import get_auc_scores, get_cls_scores, select_by_steps
+from tphenotype import Predictor
 
 
-def evaluate_encoder(method, config, loss_weights, splits, seed=0, epochs=50):
+def evaluate_encoder(method, config, loss_weights_, splits, seed=0, epochs=50):
     results = []
     for i, dataset in auto.tqdm(enumerate(splits), total=len(splits), desc=f"{method.__name__}"):
         train_set, valid_set, test_set = dataset
@@ -33,16 +23,14 @@ def evaluate_encoder(method, config, loss_weights, splits, seed=0, epochs=50):
         torch.use_deterministic_algorithms(True)
         model = method(**config)
         mse = model.evaluate_encoder_params(
-            train_set, test_set, loss_weights, valid_set=valid_set, epochs=epochs, verbose=False
+            train_set, test_set, loss_weights_, valid_set=valid_set, epochs=epochs, verbose=False
         )
         results.append(mse)
     results = np.array(results)
-    return results, model
+    return results, model  # pyright: ignore
 
 
 os.makedirs("hyperparam_selection", exist_ok=True)
-
-# In[5]:
 
 
 def load_data(dataname, verbose=False):
@@ -77,13 +65,10 @@ def load_data(dataname, verbose=False):
     return splits, feat_list, temporal_dims
 
 
-# In[7]:
-
-
 def hyperparam_selection_encoder(dataname, search_space, seed=0, epochs=50):
-    splits, feat_list, temporal_dims = load_data(dataname, verbose=True)
-    tr_set, va_set, te_set = splits[0]
-    _, T, x_dim = tr_set["x"].shape
+    splits, feat_list, temporal_dims = load_data(dataname, verbose=True)  # pylint: disable=unused-variable
+    tr_set, va_set, te_set = splits[0]  # pylint: disable=unused-variable
+    _, T, x_dim = tr_set["x"].shape  # pylint: disable=unused-variable
     _, _, y_dim = tr_set["y"].shape
 
     # Configuration
@@ -128,15 +113,15 @@ def hyperparam_selection_encoder(dataname, search_space, seed=0, epochs=50):
         predictor_config["encoder_config"] = test_config
 
         if dataname != "ICU" and test_config["max_degree"] != 1:
-            # only conisder max_degree in [1,2] for ICU dataset
+            # only consider max_degree in [1,2] for ICU dataset
             continue
         msg = ",".join(msg)
         print(f"test config {msg} ...")
-        results, model = evaluate_encoder(
+        results, model = evaluate_encoder(  # pylint: disable=unused-variable
             Predictor, predictor_config, test_loss_weights, splits, seed=seed, epochs=epochs
         )
-        scores.loc[i, "mse_mean"] = np.mean(results)
-        scores.loc[i, "mse_std"] = np.std(results)
+        scores.loc[i, "mse_mean"] = np.mean(results)  # pyright: ignore
+        scores.loc[i, "mse_std"] = np.std(results)  # pyright: ignore
         scores.loc[i, "config"] = msg
         scores.to_csv(result_file)
 
@@ -147,17 +132,12 @@ def hyperparam_selection_encoder(dataname, search_space, seed=0, epochs=50):
     print(scores.loc[best, "config"])
 
 
-# In[8]:
-# In[4]:
-
-search_space = {
+search_space_ = {
     "pole": [1.0, 10.0],
     "real": [0.1, 1.0],
     "pole_separation": [1.0, 2.0],
     "max_degree": [1, 2],
 }
 
-for dataname in ["Synth", "ICU", "ADNI"]:
-    hyperparam_selection_encoder(dataname, search_space)
-
-# In[ ]:
+for dataname_ in ["Synth", "ICU", "ADNI"]:
+    hyperparam_selection_encoder(dataname_, search_space_)

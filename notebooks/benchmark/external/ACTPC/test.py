@@ -1,41 +1,33 @@
+# pylint: disable=unspecified-encoding
+
+import argparse
 import copy
 import os
+import pickle
 import random
-import sys
 
-import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
-
-fd = os.open("/dev/null", os.O_WRONLY)
-os.dup2(fd, 2)
-
-# In[2]:
-import argparse
-
-import pickle5 as pickle
 import tensorflow as tf
 
 # user defined
-import utils_network as utils
 from class_model_v7 import DeepTPC_ICLR
-from pandas.api.types import is_numeric_dtype, is_string_dtype
+from pandas.api.types import is_numeric_dtype
 
 # performance metrics
-from sklearn.cluster import KMeans, MiniBatchKMeans
 from sklearn.metrics import (
     adjusted_rand_score,
     average_precision_score,
-    homogeneity_score,
     normalized_mutual_info_score,
     roc_auc_score,
 )
 from sklearn.metrics.cluster import contingency_matrix
-from sklearn.model_selection import train_test_split
-from tensorflow.python.ops.rnn import _transpose_batch_time
+
+# fd = os.open("/dev/null", os.O_WRONLY)
+# os.dup2(fd, 2)
 
 
-### PARAMETER LOGGING
+# -- PARAMETER LOGGING
 def save_logging(dictionary, log_name):
     with open(log_name, "w") as f:
         for key, value in dictionary.items():
@@ -46,12 +38,12 @@ def save_logging(dictionary, log_name):
 
 
 def load_logging(filename):
-    data = dict()
+    data_ = dict()
     with open(filename) as f:
 
-        def is_float(input):
+        def is_float(input_):
             try:
-                num = float(input)
+                _ = float(input_)
             except ValueError:
                 return False
             return True
@@ -69,22 +61,19 @@ def load_logging(filename):
                         value = tf.nn.tanh
                     else:
                         raise ValueError("ERROR: wrong choice of activation function!")
-                    data[key] = value
+                    data_[key] = value
                 else:
                     if value.isdigit():
-                        data[key] = int(value)
+                        data_[key] = int(value)
                     elif is_float(value):
-                        data[key] = float(value)
+                        data_[key] = float(value)
                     elif value == "None":
-                        data[key] = None
+                        data_[key] = None
                     else:
-                        data[key] = value
+                        data_[key] = value
             else:
                 pass  # deal with bad lines of text here
-    return data
-
-
-# In[5]:
+    return data_
 
 
 def log(x):
@@ -112,7 +101,7 @@ def f_get_minibatch(mb_size, x, y):
     return x_mb, y_mb
 
 
-### PERFORMANCE METRICS:
+# -- PERFORMANCE METRICS:
 def f_get_prediction_scores(y_true_, y_pred_):
     if np.sum(y_true_) == 0:  # no label for running roc_auc_curves
         auroc_ = -1.0
@@ -123,25 +112,25 @@ def f_get_prediction_scores(y_true_, y_pred_):
     return (auroc_, auprc_)
 
 
-def purity_score(y_true, y_pred):
+def purity_score(y_true_, y_pred_):
     # compute contingency matrix (also called confusion matrix)
-    c_matrix = contingency_matrix(y_true, y_pred)
+    c_matrix = contingency_matrix(y_true_, y_pred_)
     # return purity
-    return np.sum(np.amax(c_matrix, axis=0)) / np.sum(c_matrix)
+    return np.sum(np.amax(c_matrix, axis=0)) / np.sum(c_matrix)  # pyright: ignore
 
 
-def data_to_stats(x):
+def data_to_stats(x):  # pyright: ignore
     if is_numeric_dtype(x):
         return f"{np.mean(x):.2f}±{np.std(x):.2f}"
     else:
         return x[0]
 
 
-def set_random_seed(seed):
-    os.environ["PYTHONHASHSEED"] = str(seed)
-    random.seed(seed)
-    np.random.seed(seed)
-    tf.set_random_seed(seed)
+def set_random_seed(seed_):
+    os.environ["PYTHONHASHSEED"] = str(seed_)
+    random.seed(seed_)
+    np.random.seed(seed_)
+    tf.set_random_seed(seed_)
 
 
 if __name__ == "__main__":
@@ -186,14 +175,14 @@ if __name__ == "__main__":
         dataset = copy.deepcopy(dataset)
 
         for subset in dataset:
-            x = subset["x"]
+            x_ = subset["x"]
             t = subset["t"]
             m = subset["range_mask"]
             delta_t = np.zeros((*t.shape, 1))
             delta_t[:, 1:, 0] = t[:, 1:] - t[:, :-1]
             delta_t[m == 0] = 0
-            x = np.concatenate([delta_t, x], axis=-1)
-            subset["x"] = x
+            x_ = np.concatenate([delta_t, x_], axis=-1)
+            subset["x"] = x_
 
         train_set, valid_set, test_set = dataset
 
@@ -259,7 +248,6 @@ if __name__ == "__main__":
         #    AUROC[y_idx] = auroc
         #    AUPRC[y_idx] = auprc
 
-        # In[31]:
         # cluster label
         pred_y, tmp_m = model.predict_s_sample(te_data_x)
         model_output["c_pred"] = pred_y
@@ -284,8 +272,8 @@ if __name__ == "__main__":
         df.loc[0, "Purity"] = RESULT_PURITY[out_itr, 0]
         df.loc[0, "NMI"] = RESULT_NMI[out_itr, 0]
         df.loc[0, "ARI"] = RESULT_RI[out_itr, 0]
-        df.loc[0, "AUROC"] = np.mean(RESULT_AUROC[out_itr, :])
-        df.loc[0, "AUPRC"] = np.mean(RESULT_AUPRC[out_itr, :])
+        df.loc[0, "AUROC"] = np.mean(RESULT_AUROC[out_itr, :])  # pyright: ignore
+        df.loc[0, "AUPRC"] = np.mean(RESULT_AUPRC[out_itr, :])  # pyright: ignore
         dfs.append(df)
 
         model_preds.append(model_output)
@@ -293,7 +281,6 @@ if __name__ == "__main__":
     results = pd.concat(dfs).reset_index(drop=True)
     summary = results.apply(data_to_stats).to_frame().T
 
-    # In[22]:
     print(summary)
 
     output_dir = "output"

@@ -2,7 +2,6 @@
 # coding: utf-8
 
 import itertools
-import json
 import os
 import pickle
 
@@ -12,20 +11,16 @@ import torch
 from benchmark import (
     Cls_config,
     Encoder_config,
-    KME2P_config,
     Predictor_config,
-    benchmark,
     evaluate,
     loss_weights,
 )
 from tqdm import auto
 
-from tphenotype import LaplaceEncoder, Predictor
-from tphenotype.baselines import E2P, KMDTW, KME2P
-from tphenotype.utils import get_auc_scores, get_cls_scores, select_by_steps
+from tphenotype import Predictor
 
 
-def evaluate_cluster(method, config, loss_weights, splits, seed=0, epochs=50, steps=[-1], metric="Hprc", **kwargs):
+def evaluate_cluster(method, config, loss_weights_, splits, seed=0, epochs=50, steps=(-1,), metric="Hprc", **kwargs):
     cache_name = kwargs.get("cache_name", None)
     results = []
     for i, dataset in auto.tqdm(enumerate(splits), total=len(splits), desc=f"{method.__name__}"):
@@ -41,17 +36,15 @@ def evaluate_cluster(method, config, loss_weights, splits, seed=0, epochs=50, st
             model.fit_clusters(train_set, verbose=False)
         else:
             os.makedirs(save_dir, exist_ok=True)
-            model = model.fit(train_set, loss_weights, valid_set=valid_set, epochs=epochs, verbose=False)
+            model = model.fit(train_set, loss_weights_, valid_set=valid_set, epochs=epochs, verbose=False)
             model.save(save_dir, model_name)
         scores = evaluate(model, test_set, steps)
         results.append(scores[metric])
     results = np.array(results)
-    return results, model
+    return results, model  # pyright: ignore
 
 
 os.makedirs("hyperparam_selection", exist_ok=True)
-
-# In[5]:
 
 
 def load_data(dataname, verbose=False):
@@ -86,13 +79,10 @@ def load_data(dataname, verbose=False):
     return splits, feat_list, temporal_dims
 
 
-# In[7]:
-
-
-def hyperparam_selection_cluster(dataname, search_space, predictor_config, loss_weights, seed=0, epochs=50):
-    splits, feat_list, temporal_dims = load_data(dataname, verbose=True)
-    tr_set, va_set, te_set = splits[0]
-    _, T, x_dim = tr_set["x"].shape
+def hyperparam_selection_cluster(dataname, search_space, predictor_config, loss_weights_, seed=0, epochs=50):
+    splits, feat_list, temporal_dims = load_data(dataname, verbose=True)  # pylint: disable=unused-variable
+    tr_set, va_set, te_set = splits[0]  # pylint: disable=unused-variable
+    _, T, x_dim = tr_set["x"].shape  # pylint: disable=unused-variable
     _, _, y_dim = tr_set["y"].shape
 
     # Configuration
@@ -117,28 +107,28 @@ def hyperparam_selection_cluster(dataname, search_space, predictor_config, loss_
 
         test_config = cls_config.copy()
         msg = []
-        for j, k in enumerate(search_space.keys()):
-            if k in cls_config:
-                test_config[k] = comb[j]
-            msg.append(f"{k}:{comb[j]}")
+        for j, k_ in enumerate(search_space.keys()):
+            if k_ in cls_config:
+                test_config[k_] = comb[j]
+            msg.append(f"{k_}:{comb[j]}")
 
         msg = ",".join(msg)
         print(f"test config {msg} ...")
         print("loss config:")
-        print(loss_weights)
+        print(loss_weights_)
         predictor_config["cls_config"] = test_config
 
-        results, model = evaluate_cluster(
+        results, model = evaluate_cluster(  # pylint: disable=unused-variable
             Predictor,
             predictor_config,
-            loss_weights,
+            loss_weights_,
             splits,
             seed=seed,
             epochs=epochs,
             cache_name=f"hs_orig-{dataname}",
         )
-        scores.loc[i, "H_mean"] = np.mean(results)
-        scores.loc[i, "H_std"] = np.std(results)
+        scores.loc[i, "H_mean"] = np.mean(results)  # pyright: ignore
+        scores.loc[i, "H_std"] = np.std(results)  # pyright: ignore
         scores.loc[i, "config"] = msg
         scores.to_csv(result_file)
 
@@ -149,10 +139,6 @@ def hyperparam_selection_cluster(dataname, search_space, predictor_config, loss_
     print(scores.loc[best, "config"])
 
 
-# In[8]:
-# In[4]:
-
-
 def read_config(config_str):
     config = {}
     for item in config_str.split(","):
@@ -161,21 +147,21 @@ def read_config(config_str):
     return config
 
 
-search_space = {
+search_space_ = {
     "K": [2, 3, 4, 5],
 }
 
-for dataname in ["Synth", "ICU", "ADNI"]:
-    result_file = f"hyperparam_selection/{dataname}_encoder.csv"
-    scores = pd.read_csv(result_file, index_col=0)
-    scores = scores.astype({"mse_mean": "float"})
-    best = scores["mse_mean"].idxmin()
+for dataname_ in ["Synth", "ICU", "ADNI"]:
+    result_file_ = f"hyperparam_selection/{dataname_}_encoder.csv"
+    scores_ = pd.read_csv(result_file_, index_col=0)
+    scores_ = scores_.astype({"mse_mean": "float"})
+    best_ = scores_["mse_mean"].idxmin()
 
     test_loss_weights = loss_weights.copy()
     encoder_config = Encoder_config.copy()
 
-    config = read_config(scores.loc[best, "config"])
-    for k, v in config.items():
+    config_ = read_config(scores_.loc[best_, "config"])
+    for k, v in config_.items():
         if k in test_loss_weights:
             default_v = test_loss_weights[k]
             test_loss_weights[k] = type(default_v)(v)
@@ -183,21 +169,19 @@ for dataname in ["Synth", "ICU", "ADNI"]:
             default_v = encoder_config[k]
             encoder_config[k] = type(default_v)(v)
 
-    # result_file = f'hyperparam_selection/{dataname}_predictor.csv'
-    # scores = pd.read_csv(result_file, index_col=0)
-    # scores = scores.astype({'roc_mean': 'float'})
-    # best = scores['roc_mean'].idxmax()
+    # result_file_ = f'hyperparam_selection/{dataname_}_predictor.csv'
+    # scores_ = pd.read_csv(result_file_, index_col=0)
+    # scores_ = scores_.astype({'roc_mean': 'float'})
+    # best_ = scores_['roc_mean'].idxmax()
 
-    predictor_config = Predictor_config.copy()
+    predictor_config_ = Predictor_config.copy()
 
-    # config = read_config(scores.loc[best, 'config'])
-    # for k, v in config.items():
+    # config_ = read_config(scores_.loc[best_, 'config'])
+    # for k, v in config_.items():
     #     if k in predictor_config:
     #         default_v = predictor_config[k]
     #         predictor_config[k] = type(default_v)(v)
 
-    predictor_config["encoder_config"] = encoder_config
+    predictor_config_["encoder_config"] = encoder_config
 
-    hyperparam_selection_cluster(dataname, search_space, predictor_config, test_loss_weights)
-
-# In[ ]:
+    hyperparam_selection_cluster(dataname_, search_space_, predictor_config_, test_loss_weights)

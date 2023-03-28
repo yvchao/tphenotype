@@ -1,39 +1,29 @@
 # coding: utf-8
-
-# In[ ]:
-
-_EPSILON = 1e-08
+# pylint: disable=unspecified-encoding
 
 import os
 import random
 import sys
 
-import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 import tensorflow as tf
 from class_Seq2Seq import DCN_Seq2Seq
 
 # performance metrics
-from sklearn.cluster import KMeans, MiniBatchKMeans
+from sklearn.cluster import MiniBatchKMeans
 from sklearn.metrics import (
     adjusted_rand_score,
     average_precision_score,
-    homogeneity_score,
     normalized_mutual_info_score,
     roc_auc_score,
 )
 from sklearn.metrics.cluster import contingency_matrix
 from sklearn.model_selection import train_test_split
-from tensorflow.contrib.layers import fully_connected as FC_Net
-from tensorflow.python.ops.rnn import _transpose_batch_time
 
 sys.path.append("../..")
-import utils_network as utils
 
-# In[ ]:
-
-data_mode = "CF_comorbidity_select"  #'CF_comorbidity_select'
+data_mode = "CF_comorbidity_select"  # 'CF_comorbidity_select'
 
 # IMPORT DATASET
 if data_mode == "CF":
@@ -91,10 +81,9 @@ elif data_mode == "ADNI":
     data_y = npz["data_y"]
     feat_list = npz["feat_list"]
     label_list = npz["label_list"]
-# In[ ]:
 
 
-### PARAMETER LOGGING
+# -- PARAMETER LOGGING
 def save_logging(dictionary, log_name):
     with open(log_name, "w") as f:
         for key, value in dictionary.items():
@@ -108,9 +97,9 @@ def load_logging(filename):
     data = dict()
     with open(filename) as f:
 
-        def is_float(input):
+        def is_float(input_):
             try:
-                num = float(input)
+                _ = float(input_)
             except ValueError:
                 return False
             return True
@@ -143,9 +132,7 @@ def load_logging(filename):
     return data
 
 
-# In[ ]:
-
-##### USER-DEFINED FUNCTIONS
+# --- USER-DEFINED FUNCTIONS
 
 
 def log(x):
@@ -163,17 +150,14 @@ def get_seq_length(sequence):
     return tmp_length
 
 
-def f_get_minibatch(mb_size, x, y):
+def f_get_minibatch(mb_size_, x, y):
     idx = range(np.shape(x)[0])
-    idx = random.sample(idx, mb_size)
+    idx = random.sample(idx, mb_size_)
 
-    x_mb = x[idx, :, :].astype(float)
-    y_mb = y[idx, :, :].astype(float)
+    x_mb_ = x[idx, :, :].astype(float)
+    y_mb_ = y[idx, :, :].astype(float)
 
-    return x_mb, y_mb
-
-
-# In[ ]:
+    return x_mb_, y_mb_
 
 
 def f_get_prediction_scores(y_true_, y_pred_):
@@ -190,24 +174,24 @@ def purity_score(y_true, y_pred):
     # compute contingency matrix (also called confusion matrix)
     c_matrix = contingency_matrix(y_true, y_pred)
     # return purity
-    return np.sum(np.amax(c_matrix, axis=0)) / np.sum(c_matrix)
+    return np.sum(np.amax(c_matrix, axis=0)) / np.sum(c_matrix)  # pyright: ignore
 
 
 def get_all_x(x_):
     tmp_length = np.sum(np.sum(np.abs(x_), axis=2) != 0, axis=1)
 
-    tmp_x = np.zeros([np.shape(x_)[0] * max_length, max_length, x_dim])
+    tmp_x_ = np.zeros([np.shape(x_)[0] * max_length, max_length, x_dim])
     for i in range(np.shape(x_)[0]):
         for t in range(tmp_length[i]):
-            tmp_x[(i * max_length) + t, : (t + 1), :] = x_[i, : (t + 1), :]
+            tmp_x_[(i * max_length) + t, : (t + 1), :] = x_[i, : (t + 1), :]
 
-    tmp_x = tmp_x[np.sum(np.sum(np.abs(tmp_x), axis=2), axis=1) != 0]
-    return tmp_x
+    tmp_x_ = tmp_x_[np.sum(np.sum(np.abs(tmp_x_), axis=2), axis=1) != 0]
+    return tmp_x_
 
 
-x_dim = np.shape(data_x)[2]
-y_dim = np.shape(data_y)[2]
-max_length = np.shape(data_x)[1]
+x_dim = np.shape(data_x)[2]  # pyright: ignore
+y_dim = np.shape(data_y)[2]  # pyright: ignore
+max_length = np.shape(data_x)[1]  # pyright: ignore
 rnn_type = "LSTM"  # GRU, LSTM
 
 OUT_ITERATION = 5
@@ -232,7 +216,7 @@ RESULT_PURITY = np.zeros([OUT_ITERATION, 1])
 
 for out_itr in [0, 1, 2, 3, 4]:
     tr_data_x, te_data_x, tr_data_y, te_data_y = train_test_split(
-        data_x, data_y, test_size=0.2, random_state=seed + out_itr
+        data_x, data_y, test_size=0.2, random_state=seed + out_itr  # pyright: ignore
     )
 
     tr_data_x, va_data_x, tr_data_y, va_data_y = train_test_split(
@@ -260,7 +244,7 @@ for out_itr in [0, 1, 2, 3, 4]:
 
     saver.restore(sess, load_path + "models/dcn_S2S_init_v3")
 
-    ### CLUSTER INITIALIZATION
+    # -- CLUSTER INITIALIZATION
     km = MiniBatchKMeans(n_clusters=num_Cluster, batch_size=mb_size)
     tr_z = model.predict_Z(tr_data_x)
 
@@ -309,9 +293,9 @@ for out_itr in [0, 1, 2, 3, 4]:
     saver.save(sess, save_path + "models/dcn_S2S_clustered_v3")
 
     save_logging(network_settings, save_path + "models/network_settings.txt")
-    np.savez(save_path + "models/embeddings.npz", km=km, mu=mu)
+    np.savez(save_path + "models/embeddings.npz", km=km, mu=mu)  # pyright: ignore
 
-    ### CLUSTERING PERFORMANCE CHECK
+    # -- CLUSTERING PERFORMANCE CHECK
     tmp_x = get_all_x(te_data_x)
     tmp_z = model.predict_Z(tmp_x)
 
@@ -322,7 +306,7 @@ for out_itr in [0, 1, 2, 3, 4]:
     # tmp_z  = tmp_z.reshape([-1, z_dim])[tmp_m.reshape([-1]) == 1]
     pred_y = km.predict(tmp_z)
 
-    true_y = (te_data_y * np.tile(np.expand_dims(tmp_m, axis=2), [1, 1, y_dim])).reshape([-1, y_dim])
+    true_y = (te_data_y * np.tile(np.expand_dims(tmp_m, axis=2), [1, 1, y_dim])).reshape([-1, y_dim])  # pyright: ignore
     true_y = true_y[(tmp_m.reshape([-1]) == 1)]
     true_y = np.argmax(true_y, axis=1)
 

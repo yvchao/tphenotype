@@ -1,43 +1,31 @@
-import os
-import random
-import sys
+# pylint: disable=unspecified-encoding
 
-fd = os.open("/dev/null", os.O_WRONLY)
-os.dup2(fd, 2)
-
-_EPSILON = 1e-08
-
-# In[2]:
 import argparse
 import copy
 import os
+import pickle
 import random
-import sys
 
-import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
-import pickle5 as pickle
 import tensorflow as tf
-import utils_network as utils
 from class_Seq2Seq import DCN_Seq2Seq
 
 # performance metrics
-from sklearn.cluster import KMeans, MiniBatchKMeans
+from sklearn.cluster import MiniBatchKMeans
 from sklearn.metrics import (
     adjusted_rand_score,
     average_precision_score,
-    homogeneity_score,
     normalized_mutual_info_score,
     roc_auc_score,
 )
 from sklearn.metrics.cluster import contingency_matrix
-from sklearn.model_selection import train_test_split
-from tensorflow.contrib.layers import fully_connected as FC_Net
-from tensorflow.python.ops.rnn import _transpose_batch_time
+
+# fd = os.open("/dev/null", os.O_WRONLY)
+# os.dup2(fd, 2)
 
 
-### PARAMETER LOGGING
+# -- PARAMETER LOGGING
 def save_logging(dictionary, log_name):
     with open(log_name, "w") as f:
         for key, value in dictionary.items():
@@ -48,12 +36,12 @@ def save_logging(dictionary, log_name):
 
 
 def load_logging(filename):
-    data = dict()
+    data_ = dict()
     with open(filename) as f:
 
-        def is_float(input):
+        def is_float(input_):
             try:
-                num = float(input)
+                _ = float(input_)
             except ValueError:
                 return False
             return True
@@ -71,22 +59,19 @@ def load_logging(filename):
                         value = tf.nn.tanh
                     else:
                         raise ValueError("ERROR: wrong choice of activation function!")
-                    data[key] = value
+                    data_[key] = value
                 else:
                     if value.isdigit():
-                        data[key] = int(value)
+                        data_[key] = int(value)
                     elif is_float(value):
-                        data[key] = float(value)
+                        data_[key] = float(value)
                     elif value == "None":
-                        data[key] = None
+                        data_[key] = None
                     else:
-                        data[key] = value
+                        data_[key] = value
             else:
                 pass  # deal with bad lines of text here
-    return data
-
-
-# In[5]:
+    return data_
 
 
 def log(x):
@@ -104,32 +89,32 @@ def get_seq_length(sequence):
     return tmp_length
 
 
-def f_get_minibatch(mb_size, x, y):
+def f_get_minibatch(mb_size_, x, y):
     idx = range(np.shape(x)[0])
-    idx = random.sample(idx, mb_size)
+    idx = random.sample(idx, mb_size_)
 
-    x_mb = x[idx].astype(float)
-    y_mb = y[idx].astype(float)
+    x_mb_ = x[idx].astype(float)
+    y_mb_ = y[idx].astype(float)
 
-    return x_mb, y_mb
+    return x_mb_, y_mb_
 
 
-def get_all_x(x_):
-    tmp_length = np.sum(np.sum(np.abs(x_), axis=2) != 0, axis=1)
+def get_all_x(x__):
+    tmp_length = np.sum(np.sum(np.abs(x__), axis=2) != 0, axis=1)
 
-    tmp_x = np.zeros([np.shape(x_)[0] * max_length, max_length, x_dim])
-    for i in range(np.shape(x_)[0]):
-        for t in range(tmp_length[i]):
+    tmp_x_ = np.zeros([np.shape(x__)[0] * max_length, max_length, x_dim])
+    for i in range(np.shape(x__)[0]):
+        for t_ in range(tmp_length[i]):
             # only take the last observation
-            if t != tmp_length[i] - 1:
+            if t_ != tmp_length[i] - 1:
                 continue
-            tmp_x[(i * max_length) + t, : (t + 1), :] = x_[i, : (t + 1), :]
+            tmp_x_[(i * max_length) + t_, : (t_ + 1), :] = x__[i, : (t_ + 1), :]
 
-    tmp_x = tmp_x[np.sum(np.sum(np.abs(tmp_x), axis=2), axis=1) != 0]
-    return tmp_x
+    tmp_x_ = tmp_x_[np.sum(np.sum(np.abs(tmp_x_), axis=2), axis=1) != 0]
+    return tmp_x_
 
 
-### PERFORMANCE METRICS:
+# -- PERFORMANCE METRICS:
 def f_get_prediction_scores(y_true_, y_pred_):
     if np.sum(y_true_) == 0:  # no label for running roc_auc_curves
         auroc_ = -1.0
@@ -140,18 +125,18 @@ def f_get_prediction_scores(y_true_, y_pred_):
     return (auroc_, auprc_)
 
 
-def purity_score(y_true, y_pred):
+def purity_score(y_true_, y_pred_):
     # compute contingency matrix (also called confusion matrix)
-    c_matrix = contingency_matrix(y_true, y_pred)
+    c_matrix = contingency_matrix(y_true_, y_pred_)
     # return purity
-    return np.sum(np.amax(c_matrix, axis=0)) / np.sum(c_matrix)
+    return np.sum(np.amax(c_matrix, axis=0)) / np.sum(c_matrix)  # pyright: ignore
 
 
-def set_random_seed(seed):
-    os.environ["PYTHONHASHSEED"] = str(seed)
-    random.seed(seed)
-    np.random.seed(seed)
-    tf.set_random_seed(seed)
+def set_random_seed(seed_):
+    os.environ["PYTHONHASHSEED"] = str(seed_)
+    random.seed(seed_)
+    np.random.seed(seed_)
+    tf.set_random_seed(seed_)
 
 
 if __name__ == "__main__":
@@ -221,14 +206,14 @@ if __name__ == "__main__":
         dataset = splits[out_itr]
         dataset = copy.deepcopy(dataset)
         for subset in dataset:
-            x = subset["x"]
+            x_ = subset["x"]
             t = subset["t"]
             m = subset["range_mask"]
             delta_t = np.zeros((*t.shape, 1))
             delta_t[:, 1:, 0] = t[:, 1:] - t[:, :-1]
             delta_t[m == 0] = 0
-            x = np.concatenate([delta_t, x], axis=-1)
-            subset["x"] = x
+            x_ = np.concatenate([delta_t, x_], axis=-1)
+            subset["x"] = x_
 
         train_set, valid_set, test_set = dataset
 
@@ -307,7 +292,7 @@ if __name__ == "__main__":
         print(AUROC)
         print(AUPRC)
 
-    print("Start KMenas on embedding")
+    print("Start KMeans on embedding")
 
     # tf.set_random_seed(0)
     # random.seed(0)
@@ -331,14 +316,14 @@ if __name__ == "__main__":
         dataset = splits[out_itr]
         dataset = copy.deepcopy(dataset)
         for subset in dataset:
-            x = subset["x"]
+            x_ = subset["x"]
             t = subset["t"]
             m = subset["range_mask"]
             delta_t = np.zeros((*t.shape, 1))
             delta_t[:, 1:, 0] = t[:, 1:] - t[:, :-1]
             delta_t[m == 0] = 0
-            x = np.concatenate([delta_t, x], axis=-1)
-            subset["x"] = x
+            x_ = np.concatenate([delta_t, x_], axis=-1)
+            subset["x"] = x_
 
         train_set, valid_set, test_set = dataset
 
@@ -368,7 +353,7 @@ if __name__ == "__main__":
 
         saver.restore(sess, load_path + "models/dcn_S2S_init_v3")
 
-        ### CLUSTER INITIALIZATION
+        # -- CLUSTER INITIALIZATION
         km = MiniBatchKMeans(n_clusters=num_Cluster, batch_size=mb_size)
         tr_z = model.predict_Z(tr_data_x)
 
@@ -435,9 +420,9 @@ if __name__ == "__main__":
         saver.save(sess, save_path + "models/dcn_S2S_clustered_v3")
 
         save_logging(network_settings, save_path + "models/network_settings.txt")
-        np.savez(save_path + "models/embeddings.npz", km=km, mu=mu, probs=cluster_y)
+        np.savez(save_path + "models/embeddings.npz", km=km, mu=mu, probs=cluster_y)  # pyright: ignore
 
-        ### CLUSTERING PERFORMANCE CHECK
+        # -- CLUSTERING PERFORMANCE CHECK
         tmp_x = get_all_x(te_data_x)
         tmp_z = model.predict_Z(tmp_x)
 

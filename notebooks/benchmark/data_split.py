@@ -1,8 +1,6 @@
 #!/usr/bin/env python
 # coding: utf-8
 
-# In[1]:
-
 import os
 import pickle
 from pathlib import Path
@@ -10,14 +8,11 @@ from pathlib import Path
 import numpy as np
 from sklearn.model_selection import KFold
 
-from tphenotype.utils import data_split, get_one_hot, select_by_steps
+from tphenotype.utils import data_split, get_one_hot
 from tphenotype.utils.dataset import cut_windowed_data
-
-# In[2]:
 
 source_data = Path("../../data")
 
-# In[3]:
 
 os.makedirs("data", exist_ok=True)
 
@@ -35,7 +30,14 @@ def split_datasets(dataset, dataname, n_trial=5, test_size=0.2, seed=0, dtype="f
         pickle.dump(splits, out, pickle.HIGHEST_PROTOCOL)
 
 
-def split_datasets_hs(dataset, dataname, k_fold=5, test_size=0.2, seed=0, dtype="float32"):
+def split_datasets_hs(  # pylint: disable=unused-argument
+    dataset,
+    dataname,
+    k_fold=5,
+    test_size=0.2,
+    seed=0,
+    dtype="float32",
+):
     splits = []
 
     kf = KFold(n_splits=k_fold, shuffle=True, random_state=seed)
@@ -51,15 +53,13 @@ def split_datasets_hs(dataset, dataname, k_fold=5, test_size=0.2, seed=0, dtype=
         pickle.dump(splits, out, pickle.HIGHEST_PROTOCOL)
 
 
-# In[4]:
-
 # ADNI -- 3 labels: NL (normal) -> mild cognitive impairment (MCI) -> Dementia
 # X features
 # Delta = 0.5 (6 months)
 # AGE seems to be useless (always constant)
 # Y features
 # DX_Dementia, DX_MCI, DX_NL
-# Right sensoring is indicated with zeros
+# Right censoring is indicated with zeros
 
 npz = np.load(source_data / "real-world/ADNI/data_with_orig.npz")
 
@@ -120,7 +120,6 @@ split_datasets_hs(dataset_ADNI, "ADNI", k_fold=3)
 print(considered)
 print(temporal_dims)
 
-# In[5]:
 
 # ICU
 
@@ -184,7 +183,6 @@ split_datasets_hs(dataset_ICU, "ICU", test_size=0.4, k_fold=3)
 print(feat_list)
 print(temporal_dims)
 
-# In[6]:
 
 # Synthetic
 data = np.load(source_data / "synthetic/data-mixed.npz")
@@ -225,34 +223,24 @@ split_datasets_hs(dataset_Synth, "Synth", k_fold=3)
 print(feat_list)
 print(temporal_dims)
 
-# In[7]:
 
 with open("data/ADNI_data.pkl", "rb") as file:
     datasets = pickle.load(file)
-    train_set, valid_set, test_set = datasets[1]
+    train_set_, valid_set_, test_set_ = datasets[1]
 
-# In[8]:
 
-train_set["x"].shape, valid_set["x"].shape, test_set["x"].shape
-
-# In[9]:
+print(train_set_["x"].shape, valid_set_["x"].shape, test_set_["x"].shape)
 
 with open("data/ICU_data.pkl", "rb") as file:
     datasets = pickle.load(file)
-    train_set, valid_set, test_set = datasets[1]
+    train_set_, valid_set_, test_set_ = datasets[1]
 
-# In[10]:
 
-train_set["x"].shape, valid_set["x"].shape, test_set["x"].shape
-
-# In[11]:
+print(train_set_["x"].shape, valid_set_["x"].shape, test_set_["x"].shape)
 
 with open("data/Synth_data.pkl", "rb") as file:
     datasets = pickle.load(file)
-    train_set, valid_set, test_set = datasets[1]
+    train_set_, valid_set_, test_set_ = datasets[1]
 
-# In[12]:
 
-train_set["x"].shape, valid_set["x"].shape, test_set["x"].shape
-
-# In[ ]:
+print(train_set_["x"].shape, valid_set_["x"].shape, test_set_["x"].shape)
