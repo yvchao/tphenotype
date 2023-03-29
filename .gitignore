@@ -132,3 +132,4 @@ dmypy.json
 src/tphenotype/**/*.cpp
 .dev
 .vscode
+data/real-world/
