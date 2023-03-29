@@ -33,6 +33,7 @@ if __name__ == "__main__":
 
         setup(
             version=find_version(),
+            ext_package=f"{PKG}.utils",
             ext_modules=cythonize(extensions, **cython_config),
         )
     except:  # noqa
