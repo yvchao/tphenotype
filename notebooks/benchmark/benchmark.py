@@ -8,6 +8,8 @@ from tqdm import auto
 
 from tphenotype.utils import data_split, get_auc_scores, get_cls_scores, select_by_steps
 
+PRINT_EXC = False
+
 
 def batch_interp(t, tp, fp):
     return np.stack([interp(t, tp[i], fp[i]) for i in range(fp.shape[0])], axis=0)
@@ -39,16 +41,18 @@ def evaluate(model, dataset, steps=(-1,)):
             c_pred = model.predict_cluster(x, t)
             c_pred = select_by_steps(c_pred, mask, steps)
         except Exception:  # pylint: disable=broad-exception-caught
-            print("Exception occurred, so c_pred = None")
-            print(traceback.format_exc())
+            if PRINT_EXC:
+                print("Exception occurred, so c_pred = None")
+                print(traceback.format_exc())
             c_pred = None
 
         try:
             y_pred = model.predict_proba(x, t)
             y_pred = select_by_steps(y_pred, mask, steps)
         except Exception:  # pylint: disable=broad-exception-caught
-            print("Exception occurred, so y_pred = None")
-            print(traceback.format_exc())
+            if PRINT_EXC:
+                print("Exception occurred, so y_pred = None")
+                print(traceback.format_exc())
             y_pred = None
 
     if c is not None:
