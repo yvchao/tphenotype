@@ -1,3 +1,5 @@
+import traceback
+
 import numpy as np
 import pandas as pd
 import torch
@@ -37,12 +39,16 @@ def evaluate(model, dataset, steps=(-1,)):
             c_pred = model.predict_cluster(x, t)
             c_pred = select_by_steps(c_pred, mask, steps)
         except Exception:  # pylint: disable=broad-exception-caught
+            print("Exception occurred, so c_pred = None")
+            print(traceback.format_exc())
             c_pred = None
 
         try:
             y_pred = model.predict_proba(x, t)
             y_pred = select_by_steps(y_pred, mask, steps)
         except Exception:  # pylint: disable=broad-exception-caught
+            print("Exception occurred, so y_pred = None")
+            print(traceback.format_exc())
             y_pred = None
 
     if c is not None:
@@ -128,7 +134,7 @@ KME2P_config = {
     "latent_size": 10,
     "hidden_size": 10,
     "num_layers": 2,
-    "device": "cpu",
+    "device": "cuda" if torch.cuda.is_available() else "cpu",
 }
 
 Encoder_config = {
@@ -140,7 +146,7 @@ Encoder_config = {
     "freq_scaler": 20,  # scale up the imaginary part to help learning
     "window_size": None,  # whether or not to include time delay terms
     "equivariant_embed": True,  # whether or not to sort the poles (useless during training)
-    "device": "cpu",
+    "device": "cuda" if torch.cuda.is_available() else "cpu",
 }
 
 Cls_config = {
@@ -160,7 +166,7 @@ Predictor_config = {
     "encoder_config": None,
     "cls_config": None,
     "categorical": True,
-    "device": "cpu",
+    "device": "cuda" if torch.cuda.is_available() else "cpu",
 }
 
 loss_weights = {"ce": 1.0, "rmse": 1.0, "cont": 0.01, "pole": 1.0, "real": 0.1}
