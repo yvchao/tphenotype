@@ -37,7 +37,7 @@ class SpectralDTW(BaseModel):
         self.corpus_size = len(self.corpus_x)
         return self
 
-    def predict_cluster(self, x, t, mask=None):
+    def predict_cluster(self, x, t, mask, *args):
         _, _, x_dim = x.shape
         x = slice_sub_sequences(x, mask)
         x_concat = np.concatenate([self.corpus_x, x], axis=0)
@@ -58,7 +58,7 @@ class SpectralDTW(BaseModel):
             cluster_idx[cluster_pred == c] = i
         return cluster_idx
 
-    def predict_proba(self, x, t, mask=None):
+    def predict_proba(self, x, t, mask, *args):
         cluster = self.predict_cluster(x, t, mask)
         labels = self.cluster_y[cluster]
         return labels
