@@ -1,5 +1,6 @@
-import torch
 import numpy as np
+import torch
+import torch.utils.data
 from sklearn.model_selection import train_test_split
 
 from .utils import select_by_steps
@@ -37,32 +38,31 @@ def reverse_seq(seq, mask):
     return seq_new
 
 
-def cut_windowed_data(t, x, y, m, window_size=10, steps=[-1], range_mask=False):
+def cut_windowed_data(t, x, y, m, window_size=10, steps=(-1,), range_mask=False):
     mask_sel = select_by_steps(m, m, steps, sub_sequence=True)
     x_sel = select_by_steps(x, m, steps, sub_sequence=True, keepdims=True)
     t_sel = select_by_steps(t, m, steps, sub_sequence=True)
     y_sel = select_by_steps(y, m, steps, sub_sequence=True, keepdims=True)
     t_start = np.max(t_sel, axis=-1, keepdims=True) - window_size
     mask_sel[t_sel <= t_start] = 0
-    max_length = np.max(mask_sel.sum(axis=-1)).astype('int')
+    max_length = np.max(mask_sel.sum(axis=-1)).astype("int")
     x_sel = reverse_seq(x_sel, mask_sel)[:, :max_length]
     t_sel = reverse_seq(t_sel, mask_sel)[:, :max_length]
     y_sel = reverse_seq(y_sel, mask_sel)[:, :max_length]
     m_sel = reverse_seq(mask_sel, mask_sel)[:, :max_length]
     end_mask = np.zeros_like(m_sel)
-    end_mask[np.arange(len(m_sel)), m_sel.sum(axis=-1).astype('int') - 1] = 1
+    end_mask[np.arange(len(m_sel)), m_sel.sum(axis=-1).astype("int") - 1] = 1
     if not range_mask:
         m_sel = end_mask
 
     length = np.argmax(end_mask, axis=-1) + 1
-    keep = (length > 1)
+    keep = length > 1
     return t_sel[keep], x_sel[keep], y_sel[keep], m_sel[keep]
 
 
 class Dataset(torch.utils.data.Dataset):
-
-    def update_property(self, property, value):
-        setattr(self, property, value)
+    def update_property(self, property_, value):
+        setattr(self, property_, value)
 
     def __init__(self, dataset):
         super().__init__()
@@ -86,5 +86,5 @@ class Dataset(torch.utils.data.Dataset):
             elif isinstance(v, np.ndarray):
                 ret[k] = torch.from_numpy(v)
             else:
-                raise ValueError(f'Unknown data type {type(v)} for {k}.')
+                raise ValueError(f"Unknown data type {type(v)} for {k}.")
         return ret

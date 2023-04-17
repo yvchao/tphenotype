@@ -1,5 +1,5 @@
-import torch
 import numpy as np
+import torch
 
 from ..base_model import NNBaseModel
 from ..nn import MLP
@@ -8,15 +8,20 @@ from ..utils.utils import EPS
 
 
 class S2S(NNBaseModel):
-
     @device_init
-    def __init__(self, latent_size: int, hidden_size: int, num_layers: int, **kwargs):
+    def __init__(  # pylint: disable=unused-argument
+        self,
+        latent_size: int,
+        hidden_size: int,
+        num_layers: int,
+        **kwargs,
+    ):
         super().__init__()
 
         self.latent_size = latent_size
         self.hidden_size = hidden_size
         self.num_layers = num_layers
-        self.name = f'S2S'
+        self.name = "S2S"
 
         self.encoder = torch.nn.GRU(2, self.latent_size, self.num_layers, batch_first=True)
 
@@ -25,12 +30,12 @@ class S2S(NNBaseModel):
 
         self.predictor = MLP(self.latent_size, 1, hidden_size=self.hidden_size, num_layers=self.num_layers)
 
-    def forward(self, input):
+    def forward(self, X):
         # t: batch_size x series_size
         # x: batch_size x series_size x x_dim
         # y: batch_size x series_size x y_dim
         # mask: batch_size x series_size
-        t, x = input['t'], input['f']
+        t, x = X["t"], X["f"]
 
         z = self._encode(x, t)
         x_rec = self._decode(z, t)
@@ -43,22 +48,22 @@ class S2S(NNBaseModel):
         # y: batch_size x series_size x y_dim
         # mask: batch_size x series_size
         # t = batch['t']
-        x = batch['f']
-        mask = batch['mask']
+        x = batch["f"]
+        mask = batch["mask"]
 
         x_rec = self.forward(batch)
         diff = torch.square(x - x_rec)
         mse = torch.sum(diff * mask, dim=-1) / (torch.sum(mask, dim=-1) + EPS)
         mse = torch.mean(mse)
         losses = {}
-        losses['mse'] = mse
+        losses["mse"] = mse
         return losses
 
     def _calculate_valid_losses(self, batch):
         # t = valid_set['t']
         # x = valid_set['x']
-        x = batch['f']
-        mask = batch['mask']
+        x = batch["f"]
+        mask = batch["mask"]
 
         x_rec = self.forward(batch)
         diff = torch.square(x - x_rec)
@@ -66,7 +71,7 @@ class S2S(NNBaseModel):
         mse = torch.mean(mse)
 
         losses = {}
-        losses['mse'] = mse
+        losses["mse"] = mse
         return losses
 
     def _encode(self, x, t):

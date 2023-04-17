@@ -1,43 +1,38 @@
-#!/bin/bash 
+#!/bin/bash
 
 # use deterministic algorithms
 export CUBLAS_WORKSPACE_CONFIG=:4096:8
 
-ENV_NAME=venv
+# Uncomment the below lines if re-running data splitting and hyperparameter selection:
+# rm -rfv ./data/*
+# rm -rfv ./hyperparam_selection/*
 
-run_in_venv()
-{
-    if [[ $CONDA_PREFIX ]]; then
-      eval "$(conda shell.bash hook)"
-      conda activate ../../$ENV_NAME
-      $@
-      conda deactivate
-    elif [[ $PYENV_ROOT ]]; then
-      source ../../$ENV_NAME/bin/activate
-      $@
-      deactivate
-    fi
-}
+# Remove the previous benchmark results.
+# Uncomment to make sure to re-run all benchmarks from scratch.
+# rm -rfv ./benchmark_results/*
 
-main_exp()
-{
-    echo  split datasets
-    python data_split.py
-    echo run hyperparameter selection
-    bash ./parameter_selection.sh >>hparams_selection.log 2>&1
-    echo run benchmark 
-    python benchmarks.py >>benchmark.log 2>&1
-}
+# Remove model caches - model loading does not currently work correctly.
+rm -rfv ./model_cache/*
+rm -rfv ./external/ACTPC/ADNI/*
+rm -rfv ./external/ACTPC/ICU/*
+rm -rfv ./external/ACTPC/Synth/*
+rm -rfv ./external/ACTPC/output/*
+rm -rfv ./external/dcn_Seq2Seq/ADNI/*
+rm -rfv ./external/dcn_Seq2Seq/ICU/*
+rm -rfv ./external/dcn_Seq2Seq/Synth/*
+rm -rfv ./external/dcn_Seq2Seq/output/*
+# ----------------------------------------------------------------------
 
-run_in_venv main_exp
+echo  "Split datasets..."
+python -u data_split.py
+echo "Run hyperparameter selection..."
+bash ./parameter_selection.sh > hparams_selection.log 2>&1
+echo "Run benchmarks..."
+python -u benchmarks.py > benchmark.log 2>&1
 
-echo run external baselines
-cd external 
-bash ./run_benchmark.sh >>external_baselines.log 2>&1
+echo "Run external baselines..."
+cd external
+bash ./run_benchmark.sh > external_baselines.log 2>&1
 
 cd ..
-run_in_venv python external_benchmarks.py
-
-
-
-
+python -u external_benchmarks.py

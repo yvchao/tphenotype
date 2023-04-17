@@ -1,14 +1,14 @@
+# pylint: disable=attribute-defined-outside-init
+
 import numpy as np
 from tqdm import auto
-from sklearn.metrics.pairwise import euclidean_distances
+
 from ..utils.utils import batch_d, select_by_steps
-from .synctwin_solver import AffinitySolver
-from .graph_kmeans import initialize_centers, GraphKmeans
+from .graph_kmeans import GraphKmeans
 
 
 class SyncClustering:
-
-    def __init__(self, predictor, K, steps=[-1], tol=1e-6, verbose=True, test_num=50, threshold=np.log(2)):
+    def __init__(self, predictor, K, steps=(-1,), tol=1e-6, verbose=True, test_num=50, threshold=np.log(2)):
         self.K = K
         self.predictor = predictor
         self.steps = np.array(steps)
@@ -45,11 +45,11 @@ class SyncClustering:
         xs = (self.x_corpus, self.x_corpus)
         probs = (self.probs_corpus, self.probs_corpus)
         if self.verbose:
-            print('construct similarity graph')
+            print("construct similarity graph")
         # prior on similarity
         A = self._similarity_piror_fast(xs, probs, identical=True)
         if self.verbose:
-            print('discover clusters from similarity graph')
+            print("discover clusters from similarity graph")
         self.A_corpus = A
         self.kmeans = GraphKmeans(self.K, self.A_corpus, self.probs_corpus)
         self.kmeans.fit()
@@ -58,7 +58,7 @@ class SyncClustering:
         self.n_clusters = len(self.clusters)
         labels = np.zeros((len(self.x_corpus),))
         for i, cluster in enumerate(self.clusters):
-            labels[cluster['samples']] = i
+            labels[cluster["samples"]] = i
         self.label_corpus = labels
 
     # def _compute_proba(self, probs_test, x_test, z_test, batch_size=1000):
@@ -84,7 +84,7 @@ class SyncClustering:
     #         proba[:, i] = np.sum(affinity[:, mask], axis=1)
     #     return proba
 
-    def _compute_proba_kmeans(self, probs_test, x_test, z_test, batch_size=1000):
+    def _compute_proba_kmeans(self, probs_test, x_test, z_test, batch_size=1000):  # pylint: disable=unused-argument
         xs = (x_test, self.x_corpus)
         probs = (probs_test, self.probs_corpus)
         A = self._similarity_piror_fast(xs, probs, identical=False)
@@ -94,7 +94,7 @@ class SyncClustering:
 
         clusters = []
         for k in auto.trange(0, n, batch_size, disable=not self.verbose):
-            i = indices[k:k + batch_size]
+            i = indices[k : k + batch_size]
             cluster = self.kmeans.predict(A[i], probs_test[i])
             clusters.append(cluster)
         clusters = np.concatenate(clusters, axis=0)
@@ -197,7 +197,7 @@ class SyncClustering:
         if identical:
             # reduce computation
             m = I < J
-            I = I[m]
+            I = I[m]  # noqa: E741
             J = J[m]
 
         return I, J
@@ -217,7 +217,7 @@ class SyncClustering:
         indices = np.arange(len(I), dtype=int)
 
         for k in auto.trange(0, len(indices), batch_size, disable=not self.verbose):
-            idx = indices[k:k + batch_size]
+            idx = indices[k : k + batch_size]
             i, j = I[idx], J[idx]
             # batch_dist: test_size x corpus_size
             batch_dist = self._batch_path_test(x_test[i], x_corpus[j])

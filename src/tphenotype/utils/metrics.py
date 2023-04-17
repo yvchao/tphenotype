@@ -1,14 +1,20 @@
-from sklearn.metrics import roc_auc_score, average_precision_score, auc
-from sklearn.metrics import normalized_mutual_info_score, adjusted_rand_score, silhouette_score
-from sklearn.metrics.pairwise import euclidean_distances
-
-from sklearn.metrics.cluster import contingency_matrix
-from sklearn.neighbors import kneighbors_graph
 import networkx as nx
 import numpy as np
 import torch
-from .entropy import calculate_MI
+from sklearn.metrics import (
+    adjusted_rand_score,
+    auc,
+    average_precision_score,
+    normalized_mutual_info_score,
+    roc_auc_score,
+    silhouette_score,
+)
+from sklearn.metrics.cluster import contingency_matrix
+from sklearn.metrics.pairwise import euclidean_distances
+from sklearn.neighbors import kneighbors_graph
+
 from .dataset import get_one_hot
+from .entropy import calculate_MI
 from .utils import EPS
 
 
@@ -16,13 +22,13 @@ def purity_score(y_true, y_pred):
     # compute contingency matrix (also called confusion matrix)
     c_matrix = contingency_matrix(y_true, y_pred)
     # return purity
-    return np.sum(np.amax(c_matrix, axis=0)) / np.sum(c_matrix)
+    return np.sum(np.amax(c_matrix, axis=0)) / np.sum(c_matrix)  # pyright: ignore
 
 
 def f_get_prediction_scores(y_true, y_pred):
-    if len(np.unique(y_true)) != 2:    #no label for running roc_auc_curves
-        auroc = -1.
-        auprc = -1.
+    if len(np.unique(y_true)) != 2:  # no label for running roc_auc_curves
+        auroc = -1.0
+        auprc = -1.0
     else:
         auroc = roc_auc_score(y_true, y_pred)
         auprc = average_precision_score(y_true, y_pred)
@@ -44,16 +50,16 @@ def get_auc_scores(y_true, y_pred, mask=None):
     return AUROC, AUPRC
 
 
-def get_cls_scores(*args, **kwargs):
-    c_pred = kwargs.get('c_pred', None)
-    c_true = kwargs.get('c_true', None)
+def get_cls_scores(*args, **kwargs):  # pylint: disable=unused-argument
+    c_pred = kwargs.get("c_pred", None)
+    c_true = kwargs.get("c_true", None)
     if c_true is not None:
         score_with_label = get_cls_scores_from_label(c_true, c_pred)
     else:
         score_with_label = {}
 
-    x = kwargs.get('x', None)
-    y_true = kwargs.get('y_true', None)
+    x = kwargs.get("x", None)
+    y_true = kwargs.get("y_true", None)
     if x is not None and c_pred is not None and y_true is not None:
         score_without_label = get_cls_scores_without_label(x, c_pred, y_true)
     else:
@@ -70,22 +76,22 @@ def get_cls_scores_from_label(c_true, c_pred):
     purity = purity_score(c_true, c_pred)
     rand = adjusted_rand_score(c_true, c_pred)
     mutual_info = normalized_mutual_info_score(c_true, c_pred)
-    scores['PURITY'] = purity
-    scores['RAND'] = rand
-    scores['MI'] = mutual_info
+    scores["PURITY"] = purity
+    scores["RAND"] = rand
+    scores["MI"] = mutual_info
     return scores
 
 
-# 2. without gronud truth
-def get_cls_scores_without_label(x, c_pred, y_true):
+# 2. without ground truth
+def get_cls_scores_without_label(x, c_pred, y_true):  # pylint: disable=unused-argument
     scores = {}
     # eval = evaluate_MI(x, c_pred, y_true)
     # scores['I(C,y)'] = eval['I(C,Y)']
     # scores['H(C)'] = eval['mean[H(C)]']
-    batch_size, _, x_dim = x.shape
+    batch_size, _, x_dim = x.shape  # pylint: disable=unused-variable
     x = x.reshape((batch_size, -1))
-    scores['Silhouette_knn'] = evaluate_silhouette(x, c_pred, y=None, topk=10)
-    scores['Silhouette_auc'] = get_silhouette_auc(x, c_pred)
+    scores["Silhouette_knn"] = evaluate_silhouette(x, c_pred, y=None, topk=10)
+    scores["Silhouette_auc"] = get_silhouette_auc(x, c_pred)
     return scores
 
 
@@ -99,16 +105,16 @@ def evaluate_MI(x, c, y):
     c_one_hot = get_one_hot(c, n)
     C = torch.from_numpy(c_one_hot)
     I_CY = calculate_MI(C, Y, 0.1, 0.1).item()
-    H_X = calculate_MI(X, X, 0.1, 0.1).item()
+    H_X = calculate_MI(X, X, 0.1, 0.1).item()  # noqa F841 # pylint: disable=unused-variable
     cs = np.unique(c)
     H_C = np.zeros((len(cs),))
     for i, c_i in enumerate(cs):
         X_C = X[c == c_i]
         H_C[i] = calculate_MI(X_C, X_C, 0.1, 0.1).item()
     info = {}
-    info['mean[H(C)]'] = np.mean(H_C)
-    info['H(C)'] = H_C
-    info['I(C,Y)'] = I_CY
+    info["mean[H(C)]"] = np.mean(H_C)
+    info["H(C)"] = H_C
+    info["I(C,Y)"] = I_CY
     return info
 
 
@@ -124,7 +130,7 @@ def evaluate_silhouette(x, c, y=None, topk=None):
             score = silhouette_score_knn(x, c, topk=topk)
         else:
             score = silhouette_score(x, c)
-    except:
+    except Exception:  # pylint: disable=broad-exception-caught
         score = np.nan
     return score
 
@@ -133,7 +139,7 @@ def get_silhouette_auc(x, c):
     try:
         conn, silh = get_silhouette_curve(x, c)
         score = auc(conn, silh)
-    except:
+    except Exception:  # pylint: disable=broad-exception-caught
         score = np.nan
     return score
 
@@ -155,7 +161,7 @@ def connectivity_score_knn(x, c, topk=None):
             if topk is None:
                 topk = len(X) - 1
             k = min(topk, len(X) - 1)
-            A = kneighbors_graph(X, k, mode='connectivity', include_self=False)
+            A = kneighbors_graph(X, k, mode="connectivity", include_self=False)
             n_components = nx.number_connected_components(nx.from_numpy_array(A))
             scores[i] = 1.0 / n_components
 
@@ -165,7 +171,7 @@ def connectivity_score_knn(x, c, topk=None):
 def silhouette_score_knn(x, c, topk=None):
     c_vals, counts = np.unique(c, return_counts=True)
     if len(c_vals) < 2:
-        raise ValueError(f'number of labels is {len(c_vals)} < 2')
+        raise ValueError(f"number of labels is {len(c_vals)} < 2")
 
     dist = euclidean_distances(x)
     indicies = np.arange(len(c))
@@ -174,7 +180,7 @@ def silhouette_score_knn(x, c, topk=None):
     for val in c_vals:
         mask = c == val
         c_dist = dist[:, mask]
-        n, c_size = c_dist.shape
+        n, c_size = c_dist.shape  # pylint: disable=unused-variable
         idx_c = indicies[mask]
 
         if topk is not None:
@@ -185,10 +191,10 @@ def silhouette_score_knn(x, c, topk=None):
             diff = x[:, np.newaxis, :] - x_knn
             diff = np.sum(diff, axis=1) / (kth - 1.0 * mask[:, np.newaxis] + EPS)
             min_dist = np.linalg.norm(diff, ord=2, axis=-1)
-            #c_dist_top_k = np.partition(c_dist, kth=kth, axis=-1)[:, :kth]
-            #min_dist = np.sum(c_dist_top_k, axis=-1) / (kth - 1.0 * mask + EPS)    # ignore d(xi,xi) -- mask == 1
+            # c_dist_top_k = np.partition(c_dist, kth=kth, axis=-1)[:, :kth]
+            # min_dist = np.sum(c_dist_top_k, axis=-1) / (kth - 1.0 * mask + EPS)    # ignore d(xi,xi) -- mask == 1
         else:
-            min_dist = np.sum(c_dist, axis=-1) / (c_size - 1.0 * mask + EPS)    # ignore d(xi,xi) -- mask == 1
+            min_dist = np.sum(c_dist, axis=-1) / (c_size - 1.0 * mask + EPS)  # ignore d(xi,xi) -- mask == 1
 
         dist_table.append(min_dist)
     dist_table = np.stack(dist_table, axis=0)

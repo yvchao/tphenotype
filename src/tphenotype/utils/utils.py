@@ -1,12 +1,12 @@
-import torch
 import numpy as np
+import torch
 
 EPS = 1e-10
 
 
 def get_summary(metrics):
-    info = [f'{metric}:{value:.2f}' for metric, value in metrics.items()]
-    return ','.join(info)
+    info = [f"{metric}:{value:.2f}" for metric, value in metrics.items()]
+    return ",".join(info)
 
 
 def calculate_loss(losses, weights):
@@ -19,7 +19,7 @@ def calculate_loss(losses, weights):
 def get_valid_indices(masks):
     valid_indicies = np.full_like(masks, -1, dtype=int)
     for i, mask in enumerate(masks):
-        idx, = np.where(mask == 1)
+        (idx,) = np.where(mask == 1)
         size = len(idx)
         if size == 0:
             continue
@@ -43,9 +43,9 @@ def select_by_steps(series, mask, steps, sub_sequence=False, keepdims=False):
     indicies = np.arange(len(series))
     for step in steps:
         t = valid_steps[:, step]
-        valid = (t >= 0)
+        valid = t >= 0
         idx = indicies[valid]
-        t = t[valid].astype('int')
+        t = t[valid].astype("int")
 
         if sub_sequence:
             seq = np.zeros((len(idx), max_length, feature_dim))
@@ -68,7 +68,8 @@ def batch_KL(P, Q):
     # P, Q: batch_size, y_dim
     d_1 = P[..., :, np.newaxis, :] * (np.log(P[..., :, np.newaxis, :] + EPS) - np.log(Q[..., np.newaxis, :, :] + EPS))
     d_0 = (1 - P[..., :, np.newaxis, :]) * (
-        np.log(1 - P[..., :, np.newaxis, :] + EPS) - np.log(1 - Q[..., np.newaxis, :, :] + EPS))
+        np.log(1 - P[..., :, np.newaxis, :] + EPS) - np.log(1 - Q[..., np.newaxis, :, :] + EPS)
+    )
     d = d_1 + d_0
     # d: batch_size x batch_size
     d = np.mean(d, axis=-1)

@@ -127,3 +127,21 @@ dmypy.json
 
 # Pyre type checker
 .pyre/
+
+# Custom
+src/tphenotype/**/*.cpp
+.dev
+.vscode
+data/real-world/
+notebooks/benchmark/data/
+notebooks/benchmark/hyperparam_selection/
+model_cache/
+notebooks/benchmark/benchmark_results/
+notebooks/benchmark/external/ACTPC/ADNI/
+notebooks/benchmark/external/ACTPC/ICU/
+notebooks/benchmark/external/ACTPC/output/
+notebooks/benchmark/external/ACTPC/Synth/
+notebooks/benchmark/external/dcn_Seq2Seq/ADNI/
+notebooks/benchmark/external/dcn_Seq2Seq/ICU/
+notebooks/benchmark/external/dcn_Seq2Seq/output/
+notebooks/benchmark/external/dcn_Seq2Seq/Synth/

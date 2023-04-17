@@ -1,6 +1,6 @@
-import sympy as sp
-import numpy as np
 import matplotlib.pyplot as plt
+import numpy as np
+import sympy as sp
 
 
 def round_expr(expr, num_digits):
@@ -11,7 +11,7 @@ def build_expression(poles, coeffs):
     # poles: n
     # coeffs: n x d
     n, d = coeffs.shape
-    s = sp.symbols('s')
+    s = sp.symbols("s")
     components = []
     for i in range(n):
         for j in range(d):
@@ -31,11 +31,17 @@ def symbol_ILT(poles, coeffs):
     # poles: n
     # coeffs: n x d
     n, d = coeffs.shape
-    t = sp.symbols('t', real=True)
+    t = sp.symbols("t", real=True)
     components = []
     for i in range(n):
         for j in range(d):
-            expr = coeffs[i, j] * sp.Pow(t, j) * sp.exp(poles[i] * t) * sp.Heaviside(t) / np.math.factorial(j)
+            expr = (
+                coeffs[i, j]
+                * sp.Pow(t, j)
+                * sp.exp(poles[i] * t)
+                * sp.Heaviside(t)
+                / np.math.factorial(j)  # pyright: ignore
+            )
             components.append(expr)
     return components, t
 
@@ -64,20 +70,20 @@ def plot_with_matplotlib(sp_plt, ax, label=None):
     return ax
 
 
-def plot(f, t, range=(0, 1), ax=None, return_ax=False):
+def plot(f, t, range_=(0, 1), ax=None, return_ax=False):
     if ax is None:
         fig, ax = plt.subplots()
     else:
         fig = ax.get_figure()
 
-    plot = sp.plot(sp.re(f), (t, *range), show=False)
-    ax = plot_with_matplotlib(plot, ax, label='Re(f)')
+    plot_ = sp.plot(sp.re(f), (t, *range_), show=False)
+    ax = plot_with_matplotlib(plot_, ax, label="Re(f)")
 
-    plot = sp.plot(sp.im(f), (t, *range), show=False)
-    ax = plot_with_matplotlib(plot, ax, label='Im(f)')
+    plot_ = sp.plot(sp.im(f), (t, *range_), show=False)
+    ax = plot_with_matplotlib(plot_, ax, label="Im(f)")
     ax.legend()
-    ax.set_xlabel('t')
-    ax.set_ylabel('f(t)')
+    ax.set_xlabel("t")
+    ax.set_ylabel("f(t)")
     fig.tight_layout()
 
     if return_ax:

@@ -2,15 +2,16 @@ import torch
 
 
 class MLP(torch.nn.Module):
-
-    def __init__(self,
-                 input_size: int,
-                 output_size: int,
-                 hidden_size: int,
-                 num_layers: int,
-                 activation=torch.nn.LeakyReLU(),
-                 output_func=torch.nn.Identity(),
-                 bias=True):
+    def __init__(
+        self,
+        input_size: int,
+        output_size: int,
+        hidden_size: int,
+        num_layers: int,
+        activation=torch.nn.LeakyReLU(),
+        output_func=torch.nn.Identity(),
+        bias=True,
+    ):
         super().__init__()
 
         self.input_size = input_size
@@ -28,7 +29,7 @@ class MLP(torch.nn.Module):
             modules = [torch.nn.Linear(self.input_size, self.output_size, bias=self.bias)]
         elif self.num_layers >= 2:
             modules = [torch.nn.Linear(self.input_size, self.hidden_size, bias=self.bias), self.activation]
-            for i in range(0, self.num_layers - 2, 1):
+            for i in range(0, self.num_layers - 2, 1):  # pylint: disable=unused-variable
                 modules = modules + [torch.nn.Linear(self.hidden_size, self.hidden_size, bias=bias), self.activation]
 
             modules = modules + [torch.nn.Linear(self.hidden_size, self.output_size, bias=bias)]
@@ -45,7 +46,6 @@ class MLP(torch.nn.Module):
 
 
 class GRU(torch.nn.Module):
-
     def __init__(self, input_size: int, hidden_size: int, num_layers: int):
         super().__init__()
         self.input_size = input_size
@@ -65,7 +65,6 @@ class GRU(torch.nn.Module):
 
 
 class LSTM(torch.nn.Module):
-
     def __init__(self, input_size: int, hidden_size: int, num_layers: int):
         super().__init__()
         self.input_size = input_size
@@ -87,7 +86,6 @@ class LSTM(torch.nn.Module):
 
 
 class TimeSeriesEncoder(torch.nn.Module):
-
     def __init__(self, input_size: int, output_size: int, hidden_size: int, num_layers: int):
         super().__init__()
 

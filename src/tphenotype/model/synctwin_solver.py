@@ -1,12 +1,11 @@
-import numpy as np
 import torch
 from tqdm import auto
-from ..utils.utils import get_summary, EPS
+
 from ..utils.decorators import numpy_io
+from ..utils.utils import EPS, get_summary
 
 
 class AffinitySolver(torch.nn.Module):
-
     def __init__(
         self,
         m,
@@ -19,8 +18,8 @@ class AffinitySolver(torch.nn.Module):
 
     def clone_state_dict(self):
         state_dict = {}
-        for key in self.state_dict():
-            state_dict[key] = self.state_dict()[key].clone()
+        for key in self.state_dict():  # pylint: disable=not-an-iterable
+            state_dict[key] = self.state_dict()[key].clone()  # pylint: disable=unsubscriptable-object
         return state_dict
 
     @numpy_io
@@ -44,7 +43,7 @@ class AffinitySolver(torch.nn.Module):
         loss = {}
         z_error = torch.norm(z_test - z_hat, p=2, dim=1)
         z_mean = torch.mean(torch.norm(z_test, dim=1)).detach()
-        loss['z_rec'] = torch.mean(z_error / (z_mean + EPS))
+        loss["z_rec"] = torch.mean(z_error / (z_mean + EPS))
         return loss
 
     def solve(self, Z, A, max_iter=300, learning_rate=0.1, tol=1e-7, verbose=True):
@@ -61,9 +60,9 @@ class AffinitySolver(torch.nn.Module):
             for _ in tbar:
                 loss = self.forward(z_test, z_corpus, A)
                 # L = loss['z_rec'] + alpha * loss['B_rec'] - beta * loss['ll']
-                L = loss['z_rec']
+                L = loss["z_rec"]
                 L.backward()
-                torch.nn.utils.clip_grad_norm_(self.parameters(), 1.0)
+                torch.nn.utils.clip_grad_norm_(self.parameters(), 1.0)  # pyright: ignore [reportPrivateImportUsage]
                 optimizer.step()
 
                 metrics = {k: v.detach().item() for k, v in loss.items()}

@@ -1,50 +1,43 @@
 [build-system]
-requires = ["setuptools>=43.0.0", "wheel", "Cython"]
 build-backend = "setuptools.build_meta"
+requires = ["setuptools>=46.1.0", "cython~=0.29"]
 
-[project]
-name = "tphenotype"
-description="T-Phenotype: Discovering Phenotypes of Predictive Temporal Patterns in Disease Progression"
-license = {text = "BSD 3-Clause License"}
-version = "0.0.0"
-requires-python = ">=3.7, <4"
-dependencies = [
-    "numpy==1.22.3",
-    "scikit-learn",
-    "matplotlib",
-    "tqdm",
-    "sympy",
-    "cython",
-    "torch",
-    "pyclustering",
-    "networkx",
-    "dtaidistance"
-]
+[tool.bandit]
+exclude_dirs = ["tests"]
 
-[tool.setuptools]
-zip-safe = false
+[tool.black]
+include = '\.pyi?$'
+line-length = 120
+target-version = ['py38', 'py39', 'py310']
 
-[tool.setuptools.packages]
-find = {namespaces = true, where = ["src"]}
+[tool.isort]
+known_first_party = "tphenotype"
+profile = "black"
+src_paths = ["src"]
 
+[tool.pylint]
+disable = "R,C"
+generated-members = "tensorflow.*,torch.*"
+ignored-modules = "tensorflow.compat,tensorflow.keras,tensorflow.python.ops,scipy.special"
 
 [tool.pyright]
-include = []
-exclude = ["**/node_modules",
-    "**/__pycache__",
-    ".venv",
-    "venv"
+exclude = [
+  "**/node_modules",
+  "**/__pycache__",
+  ".venv",
+  "venv"
 ]
 ignore = []
-stubPath = ""
-venvPath = ""
-venv = "venv"
+include = []
 reportMissingImports = true
 reportMissingTypeStubs = false
+stubPath = ""
+venv = "venv"
+venvPath = ""
 
 [tool.yapf]
 based_on_style = "yapf"
+column_limit = 120
 indent_width = 4
 spaces_before_comment = 4
-column_limit = 120
 split_before_logical_operator = true
