@@ -1,6 +1,6 @@
 BSD 3-Clause License
 
-Copyright (c) 2023, Evgeny Saveliev
+Copyright (c) 2023, Yuchao Qin and Evgeny Saveliev
 All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
